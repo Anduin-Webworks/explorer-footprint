@@ -34,6 +34,9 @@ function ns.MapProvider:Register()
 
     WorldMapFrame:AddDataProvider(self)
     self.registered = true
+    if WorldMapFrame:IsShown() then
+        self:RefreshAllData()
+    end
     return true
 end
 
@@ -61,6 +64,14 @@ function ns.MapProvider:OnUpdate()
     self.lastRefresh = now
 end
 
+function ns.MapProvider:OnMapChanged()
+    -- SetMapID signals OnMapChanged but does not guarantee a provider refresh.
+    -- Rebuild only our pins for the newly selected map.
+    self:RefreshAllData()
+    self.dirty = false
+    self.lastRefresh = GetTime()
+end
+
 function ns.MapProvider:RefreshAllData()
     local map = self:GetMap()
     if not map then
@@ -84,18 +95,36 @@ function ns.MapProvider:RefreshAllData()
     end
 
     local width, height = ns.Config.gridWidth, ns.Config.gridHeight
-    local logMax = math.log(1 + maxCount)
+
+    local function getColor(intensity)
+        local stops = ns.Config.colorStops
+        for index = 1, #stops - 1 do
+            local first, second = stops[index], stops[index + 1]
+            if intensity <= second.position then
+                local range = second.position - first.position
+                local localIntensity = range > 0 and (intensity - first.position) / range or 0
+                return
+                    first.color[1] + (second.color[1] - first.color[1]) * localIntensity,
+                    first.color[2] + (second.color[2] - first.color[2]) * localIntensity,
+                    first.color[3] + (second.color[3] - first.color[3]) * localIntensity
+            end
+        end
+
+        local last = stops[#stops].color
+        return last[1], last[2], last[3]
+    end
 
     for cellIndex, count in pairs(mapData.cells) do
         count = tonumber(count) or 0
         if count > 0 then
-            local intensity = math.log(1 + count) / logMax
+            -- Keep the first recorded visit purple while the most visited
+            -- cell is always red. Intermediate counts interpolate through
+            -- blue, green, and yellow.
+            local intensity = maxCount > 1 and (count - 1) / (maxCount - 1) or 0
             if intensity >= ns.Config.minVisibleIntensity then
                 local cellY = math.floor(cellIndex / width)
                 local cellX = cellIndex - (cellY * width)
-                local red = ns.Config.lowColor[1] + (ns.Config.highColor[1] - ns.Config.lowColor[1]) * intensity
-                local green = ns.Config.lowColor[2] + (ns.Config.highColor[2] - ns.Config.lowColor[2]) * intensity
-                local blue = ns.Config.lowColor[3] + (ns.Config.highColor[3] - ns.Config.lowColor[3]) * intensity
+                local red, green, blue = getColor(intensity)
                 local alpha = ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity
 
                 map:AcquirePin(PIN_TEMPLATE, {

@@ -18,7 +18,7 @@ flowchart LR
 
 ## Intensity
 
-Cells use a logarithmic intensity scale. This keeps a highly traveled cell from making every lower-count cell invisible. The renderer interpolates from a cool low-density color to a warm high-density color and caps alpha using centralized configuration.
+The first recorded visit is treated as 0% intensity and the most visited cell on the selected map as 100%. Positive cells interpolate through a purple → blue → green → yellow → red gradient. Unrecorded cells have no heatmap pin. Alpha is capped using centralized configuration.
 
 ## Boundaries
 

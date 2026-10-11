@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for version `0.1.0`.
+Accepted for version `0.1.0` and corrected in `0.1.1` after first in-game testing.
 
 ## Context
 
@@ -29,4 +29,4 @@ Trade-offs:
 
 ## Verification
 
-The current implementation is statically aligned with live MapCanvas provider and pin patterns. Exact visual alignment, frame layering, and taint behavior require testing in the target Retail client.
+The current implementation is statically aligned with live MapCanvas provider and pin patterns. The first test found that `MapCanvasPinTemplate` is not an available inherited template in the target client, so the addon now defines a standalone frame template with the `MapCanvasPinMixin`-derived pin mixin. Exact visual alignment, frame layering, and taint behavior still require testing in the target Retail client.

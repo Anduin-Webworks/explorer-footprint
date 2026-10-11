@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-    <Frame name="ExplorerFootprintHeatmapPinTemplate" virtual="true" inherits="MapCanvasPinTemplate" mixin="ExplorerFootprintMapPinMixin">
+    <Frame name="ExplorerFootprintHeatmapPinTemplate" virtual="true" mixin="ExplorerFootprintMapPinMixin">
         <Size x="1" y="1" />
     </Frame>
 </Ui>

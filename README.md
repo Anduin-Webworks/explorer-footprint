@@ -4,7 +4,7 @@ Explorer's Footprint is a World of Warcraft Retail addon that records outdoor pl
 
 ## Status
 
-Version `0.1.0` is the initial implementation. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
+Version `0.1.1` is the initial implementation plus the first testing fixes. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
 
 ## Features
 
