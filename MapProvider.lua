@@ -4,6 +4,25 @@ ns.MapProvider = CreateFromMixins(MapCanvasDataProviderMixin)
 
 local PIN_TEMPLATE = "ExplorerFootprintHeatmapPinTemplate"
 
+local function getIntensity(count)
+    local minimumCount = ns.Config.intensityMinCount
+    local maximumCount = ns.Config.intensityMaxCount
+    if count <= minimumCount then
+        return 0
+    elseif count >= maximumCount then
+        return 1
+    end
+
+    local minimumLog = math.log(minimumCount)
+    local maximumLog = math.log(maximumCount)
+    local logRange = maximumLog - minimumLog
+    if logRange <= 0 then
+        return 0
+    end
+
+    return (math.log(count) - minimumLog) / logRange
+end
+
 function ns.MapProvider:OnAdded(mapCanvas)
     MapCanvasDataProviderMixin.OnAdded(self, mapCanvas)
     if mapCanvas.RegisterDataProviderOnUpdate then
@@ -84,8 +103,8 @@ function ns.MapProvider:RefreshAllData()
     end
 
     local mapID = map:GetMapID()
-    local cells, maxCount = ns.MapProjection:BuildDisplayCells(mapID)
-    if maxCount <= 0 then
+    local cells = ns.MapProjection:BuildDisplayCells(mapID)
+    if not next(cells) then
         return
     end
 
@@ -112,10 +131,10 @@ function ns.MapProvider:RefreshAllData()
     for _, cellData in pairs(cells) do
         local count = cellData.count
         if count > 0 then
-            -- Keep the first recorded visit purple while the most visited
-            -- cell is always red. Intermediate counts interpolate through
-            -- blue, green, and yellow.
-            local intensity = maxCount > 1 and (count - 1) / (maxCount - 1) or 0
+            -- Use an absolute logarithmic scale so a cell's color represents
+            -- its accumulated sample count rather than the current map's
+            -- most visited cell.
+            local intensity = getIntensity(count)
             if intensity >= ns.Config.minVisibleIntensity then
                 local red, green, blue = getColor(intensity)
                 local alpha = ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity

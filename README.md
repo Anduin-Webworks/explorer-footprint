@@ -4,7 +4,7 @@ Explorer's Footprint is a World of Warcraft Retail addon that records outdoor pl
 
 ## Status
 
-Version `0.2.2` fixes heatmap pins being hidden by detail layers on some zone maps. It also includes the map-projection diagnostics introduced in `0.2.1`. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
+Version `0.2.3` adds an absolute logarithmic intensity scale from 10 to 100,000 samples. It also includes the zone-map rendering fix from `0.2.2` and map-projection diagnostics from `0.2.1`. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
 
 ## Features
 

@@ -19,7 +19,7 @@ flowchart LR
 
 ## Intensity
 
-The first recorded visit is treated as 0% intensity and the most visited cell on the selected map as 100%. Positive cells interpolate through a purple → blue → green → yellow → red gradient. Unrecorded cells have no heatmap pin. Alpha is capped using centralized configuration.
+Intensity uses an absolute logarithmic sample-count scale rather than the most visited cell on the selected map. A count of 10 is the purple anchor, followed by blue at 100, green at 1,000, yellow at 10,000, and red at 100,000 or more. Counts from 1 through 9 remain visible as purple; unrecorded cells have no heatmap pin. Alpha is capped using centralized configuration.
 
 ## Hierarchical maps
 

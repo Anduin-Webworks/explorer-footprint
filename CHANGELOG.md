@@ -4,6 +4,13 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.3] - 2026-10-10
+
+### Changed
+
+- Replaced the map-relative intensity scale with an absolute logarithmic scale.
+- Set purple, blue, green, yellow, and red anchors at 10, 100, 1,000, 10,000, and 100,000 samples.
+
 ## [0.2.2] - 2026-10-10
 
 ### Fixed
