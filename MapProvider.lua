@@ -84,12 +84,7 @@ function ns.MapProvider:RefreshAllData()
     end
 
     local mapID = map:GetMapID()
-    local mapData = ns.Database:GetMap(mapID, false)
-    if not mapData or not mapData.cells then
-        return
-    end
-
-    local maxCount = tonumber(mapData.maxCount) or 0
+    local cells, maxCount = ns.MapProjection:BuildDisplayCells(mapID)
     if maxCount <= 0 then
         return
     end
@@ -114,22 +109,20 @@ function ns.MapProvider:RefreshAllData()
         return last[1], last[2], last[3]
     end
 
-    for cellIndex, count in pairs(mapData.cells) do
-        count = tonumber(count) or 0
+    for _, cellData in pairs(cells) do
+        local count = cellData.count
         if count > 0 then
             -- Keep the first recorded visit purple while the most visited
             -- cell is always red. Intermediate counts interpolate through
             -- blue, green, and yellow.
             local intensity = maxCount > 1 and (count - 1) / (maxCount - 1) or 0
             if intensity >= ns.Config.minVisibleIntensity then
-                local cellY = math.floor(cellIndex / width)
-                local cellX = cellIndex - (cellY * width)
                 local red, green, blue = getColor(intensity)
                 local alpha = ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity
 
                 map:AcquirePin(PIN_TEMPLATE, {
-                    x = (cellX + 0.5) / width,
-                    y = (cellY + 0.5) / height,
+                    x = cellData.x,
+                    y = cellData.y,
                     width = 1 / width,
                     height = 1 / height,
                     red = red,

@@ -4,6 +4,31 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-10-10
+
+### Fixed
+
+- Assigned heatmap pins to Blizzard's registered area-POI frame level so zone-map detail layers do not hide parts of the overlay.
+
+## [0.2.1] - 2026-10-10
+
+### Added
+
+- Added `/footprint debug map` diagnostics for current map IDs, parent relationships, projection success/failure counts, and rendered coordinate bounds.
+
+## [0.2.0] - 2026-10-10
+
+### Added
+
+- Render source-map samples on related parent and child World Map views.
+- Convert source cell positions through world coordinates when building a target-map overlay.
+- Aggregate projected source cells that land in the same target cell.
+- Prefer storing new samples under a resolvable child zone when the position API returns a broad parent map.
+
+### Changed
+
+- Keep source-map data unchanged and derive hierarchical overlays at render time.
+
 ## [0.1.1] - 2026-10-10
 
 ### Fixed

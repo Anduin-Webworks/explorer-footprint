@@ -33,6 +33,12 @@ ExplorerFootprintDB = {
 5. When a cell reaches the configured ceiling, counts for that map are halved and zero cells are removed.
 6. `/footprint reset` replaces the maps table after confirmation.
 
+## Hierarchical rendering
+
+Samples remain stored under the most specific map the sampler can resolve. If `GetBestMapForUnit` returns a broad parent and `GetMapInfoAtPosition` identifies a child zone, the sample is converted and stored under that child. The renderer does not persist duplicate parent-map or child-map records. When a map is displayed, related source maps are projected into the selected map using Retail world-coordinate conversion APIs and aggregated into temporary display cells.
+
+This means a sample recorded in a zone can appear on its continent map, and an existing sample recorded on a continent can appear on a related zone map when the conversion API can resolve the position. Parent-to-child projection uses the center of each stored grid cell, so older broad-map data is best-effort at the configured grid resolution; new samples prefer a resolvable child zone. Projection failures are skipped without changing the stored source data.
+
 ## Data intentionally not stored
 
 - Raw coordinates.

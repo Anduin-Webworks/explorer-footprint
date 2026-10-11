@@ -2,7 +2,7 @@
 ## Title: Explorer's Footprint
 ## Notes: Records outdoor movement and displays an account-wide heatmap on the World Map.
 ## Author: Oswaldovzki
-## Version: 0.1.1
+## Version: 0.2.2
 ## SavedVariables: ExplorerFootprintDB
 ## IconTexture: Interface\Icons\INV_Misc_Map_01
 ## Category-enUS: Map
@@ -14,6 +14,7 @@ Localization.lua
 Database.lua
 Aggregator.lua
 Sampler.lua
+MapProjection.lua
 MapProvider.lua
 HeatmapRenderer.lua
 Options.lua

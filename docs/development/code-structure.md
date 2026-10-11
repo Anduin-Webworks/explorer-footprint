@@ -9,6 +9,7 @@
 ├── Database.lua
 ├── Aggregator.lua
 ├── Sampler.lua
+├── MapProjection.lua
 ├── MapProvider.lua
 ├── HeatmapRenderer.lua
 ├── Options.lua
@@ -29,6 +30,7 @@ The TOC loads Lua modules in dependency order. `MapProvider.lua` creates the pro
 - Sampling bug: start with `Sampler.lua`, then inspect `Aggregator.lua`.
 - Missing or corrupted data: inspect `Database.lua`.
 - Wrong cell or color: inspect `MapProvider.lua` and `Config.lua`.
+- Missing data on a parent or child map: inspect `MapProjection.lua` and the `C_Map` world-position APIs.
 - Pins not appearing: inspect `MapProvider.lua`, `ExplorerFootprint.xml`, and the target Retail MapCanvas behavior.
 - Setting not saved: inspect `Options.lua` and `Database.lua`.
 - User-facing text: inspect `Localization.lua`.

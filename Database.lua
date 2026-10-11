@@ -73,6 +73,7 @@ function ns.Database:Initialize()
 
     db.schemaVersion = ns.Config.schemaVersion
     ns.DB = db
+    ns.DataRevision = 0
     ExplorerFootprintDB = db
 end
 
@@ -96,6 +97,7 @@ end
 
 function ns.Database:ResetMaps()
     ns.DB.maps = {}
+    ns.DataRevision = (ns.DataRevision or 0) + 1
 end
 
 function ns.Database:GetTotals()

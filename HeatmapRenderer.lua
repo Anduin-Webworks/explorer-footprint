@@ -5,6 +5,11 @@ local _, ns = ...
 ExplorerFootprintMapPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
 function ExplorerFootprintMapPinMixin:OnLoad()
+    -- Jade Forest and other zone maps can have detail layers above the
+    -- default pin frame level. Use Blizzard's registered area-POI level so
+    -- the heatmap remains visible across the complete map canvas.
+    self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
+
     self.Texture = self:CreateTexture(nil, "ARTWORK")
     self.Texture:SetAllPoints()
     self:EnableMouse(false)

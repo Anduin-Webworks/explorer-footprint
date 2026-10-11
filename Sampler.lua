@@ -8,6 +8,18 @@ ns.Sampler = {
     lastY = nil,
 }
 
+local function getXY(position)
+    if not position then
+        return nil
+    end
+
+    if position.GetXY then
+        return position:GetXY()
+    end
+
+    return position.x, position.y
+end
+
 local function getPosition()
     local mapID = C_Map.GetBestMapForUnit("player")
     if not mapID then
@@ -19,7 +31,7 @@ local function getPosition()
         return nil
     end
 
-    local x, y = position:GetXY()
+    local x, y = getXY(position)
     if type(x) ~= "number" or type(y) ~= "number" then
         return nil
     end
@@ -32,6 +44,18 @@ function ns.Sampler:Sample()
     if not mapID then
         self.lastMapID, self.lastX, self.lastY = nil, nil, nil
         return false
+    end
+
+    -- Some Retail contexts return a broad parent map from
+    -- GetBestMapForUnit. Prefer a child zone when the map API can resolve
+    -- the current position inside one.
+    local childInfo = C_Map.GetMapInfoAtPosition(mapID, x, y)
+    if childInfo and childInfo.mapID and childInfo.mapID ~= mapID
+        and ns.MapProjection:IsDescendant(childInfo.mapID, mapID) then
+        local childX, childY = ns.MapProjection:ConvertPosition(mapID, x, y, childInfo.mapID)
+        if childX and childY then
+            mapID, x, y = childInfo.mapID, childX, childY
+        end
     end
 
     local shouldRecord = self.lastMapID ~= mapID

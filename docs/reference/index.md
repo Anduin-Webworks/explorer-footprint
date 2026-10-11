@@ -15,6 +15,7 @@ Sampling and renderer values are currently developer configuration in `Config.lu
 | `/footprint` | Opens the addon Settings page. |
 | `/ef` | Alias for `/footprint`. |
 | `/footprint status` | Prints map, non-zero-cell, and aggregate sample totals. |
+| `/footprint debug map` | Prints current map IDs, parent chain, source-map projection results, and rendered coordinate bounds. |
 | `/footprint reset` | Opens a confirmation dialog, then clears all map data. |
 
 ## Retail API boundary
@@ -23,6 +24,9 @@ The implementation uses:
 
 - `C_Map.GetBestMapForUnit("player")` to identify the current map.
 - `C_Map.GetPlayerMapPosition(mapID, "player")` to obtain normalized coordinates.
+- `C_Map.GetMapInfoAtPosition` to prefer a resolvable child zone when sampling from a broad map.
+- `C_Map.GetWorldPosFromMapPos` and `C_Map.GetMapPosFromWorldPos` to project source cells into a selected related map.
+- `C_Map.GetMapInfo` to follow parent-map relationships.
 - `MapCanvasDataProviderMixin` and `WorldMapFrame:AddDataProvider` for map integration.
 - `MapCanvasPinMixin` and `AcquirePin` for heatmap cells.
 - `Settings.RegisterVerticalLayoutCategory`, `Settings.RegisterAddOnSetting`, and `Settings.CreateCheckbox` for the settings page.

@@ -57,6 +57,8 @@ function ns.Aggregator:Record(mapID, x, y)
         rescaleMap(mapData)
     end
 
+    ns.DataRevision = (ns.DataRevision or 0) + 1
+
     if ns.MapProvider then
         ns.MapProvider:RequestRefresh(false)
     end
