@@ -1,0 +1,16 @@
+name: explorer-footprint
+id: ari:cloud:compass:a9370046-464a-4000-8146-9d92acfbc728:component/70fcc8de-61e0-4324-b640-e292e7692006/51bd5100-8d8f-4381-9bc1-fa08bec00f2e
+description: World of warcraft Addon that aggregate the player's coordinates and display as a overlay heatmap on the world map.
+configVersion: 1
+typeId: SERVICE
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/Anduin-Webworks/explorer-footprint
+relationships:
+  DEPENDS_ON: []
+labels:
+  - source:github
+customFields: null
