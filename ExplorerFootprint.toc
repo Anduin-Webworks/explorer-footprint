@@ -1,0 +1,21 @@
+## Interface: 120100, 120105
+## Title: Explorer's Footprint
+## Notes: Records outdoor movement and displays an account-wide heatmap on the World Map.
+## Author: Oswaldovzki
+## Version: 0.1.0
+## SavedVariables: ExplorerFootprintDB
+## IconTexture: Interface\Icons\INV_Misc_Map_01
+## Category-enUS: Map
+## OptionalDeps: Blizzard_MapCanvas, Blizzard_WorldMap
+
+Core.lua
+Config.lua
+Localization.lua
+Database.lua
+Aggregator.lua
+Sampler.lua
+MapProvider.lua
+HeatmapRenderer.lua
+Options.lua
+Debug.lua
+ExplorerFootprint.xml
