@@ -11,19 +11,19 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Replaced the map-relative intensity scale with an absolute logarithmic scale.
 - Set purple, blue, green, yellow, and red anchors at 10, 100, 1,000, 10,000, and 100,000 samples.
 
-## [0.2.2] - 2026-10-10
+## [0.2.2] - 2026-10-09
 
 ### Fixed
 
 - Assigned heatmap pins to Blizzard's registered area-POI frame level so zone-map detail layers do not hide parts of the overlay.
 
-## [0.2.1] - 2026-10-10
+## [0.2.1] - 2026-10-09
 
 ### Added
 
 - Added `/footprint debug map` diagnostics for current map IDs, parent relationships, projection success/failure counts, and rendered coordinate bounds.
 
-## [0.2.0] - 2026-10-10
+## [0.2.0] - 2026-10-09
 
 ### Added
 
@@ -36,7 +36,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - Keep source-map data unchanged and derive hierarchical overlays at render time.
 
-## [0.1.1] - 2026-10-10
+## [0.1.1] - 2026-10-08
 
 ### Fixed
 
@@ -50,7 +50,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Treat the first recorded visit as 0% intensity and the most visited cell on that map as 100%.
 - Keep positive first-visit cells visible instead of filtering them by intensity.
 
-## [0.1.0] - 2026-10-10
+## [0.1.0] - 2026-10-08
 
 ### Added
 
