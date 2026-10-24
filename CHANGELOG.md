@@ -4,6 +4,25 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.6] - 2026-10-20
+
+### Fixed
+
+- Raised the maximum base heatmap alpha from 65% to 100% so the opacity slider can make the strongest cells fully opaque.
+
+## [0.2.5] - 2026-10-19
+
+### Added
+
+- Added `/footprint toggle` and `/ef toggle` to quickly show or hide the heatmap and refresh the open map.
+
+## [0.2.4] - 2026-10-19
+
+### Added
+
+- Added a persisted heatmap opacity slider from 0% to 100%, defaulting to 55%.
+- Changing opacity refreshes the current World Map immediately.
+
 ## [0.2.3] - 2026-10-10
 
 ### Changed
@@ -11,19 +30,19 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Replaced the map-relative intensity scale with an absolute logarithmic scale.
 - Set purple, blue, green, yellow, and red anchors at 10, 100, 1,000, 10,000, and 100,000 samples.
 
-## [0.2.2] - 2026-10-09
+## [0.2.2] - 2026-10-10
 
 ### Fixed
 
 - Assigned heatmap pins to Blizzard's registered area-POI frame level so zone-map detail layers do not hide parts of the overlay.
 
-## [0.2.1] - 2026-10-09
+## [0.2.1] - 2026-10-10
 
 ### Added
 
 - Added `/footprint debug map` diagnostics for current map IDs, parent relationships, projection success/failure counts, and rendered coordinate bounds.
 
-## [0.2.0] - 2026-10-09
+## [0.2.0] - 2026-10-10
 
 ### Added
 
@@ -36,7 +55,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - Keep source-map data unchanged and derive hierarchical overlays at render time.
 
-## [0.1.1] - 2026-10-08
+## [0.1.1] - 2026-10-10
 
 ### Fixed
 
@@ -50,7 +69,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Treat the first recorded visit as 0% intensity and the most visited cell on that map as 100%.
 - Keep positive first-visit cells visible instead of filtering them by intensity.
 
-## [0.1.0] - 2026-10-08
+## [0.1.0] - 2026-10-10
 
 ### Added
 

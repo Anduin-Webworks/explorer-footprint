@@ -109,6 +109,10 @@ function ns.MapProvider:RefreshAllData()
     end
 
     local width, height = ns.Config.gridWidth, ns.Config.gridHeight
+    local opacity = math.max(
+        0,
+        math.min(100, tonumber(ns.DB.settings.overlayOpacity) or ns.Config.defaultOverlayOpacity)
+    ) / 100
 
     local function getColor(intensity)
         local stops = ns.Config.colorStops
@@ -137,7 +141,7 @@ function ns.MapProvider:RefreshAllData()
             local intensity = getIntensity(count)
             if intensity >= ns.Config.minVisibleIntensity then
                 local red, green, blue = getColor(intensity)
-                local alpha = ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity
+                local alpha = (ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity) * opacity
 
                 map:AcquirePin(PIN_TEMPLATE, {
                     x = cellData.x,

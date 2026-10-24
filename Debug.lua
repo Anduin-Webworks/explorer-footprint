@@ -140,7 +140,11 @@ function ns.Debug:Initialize()
     SLASH_EXPLORERSFOOTPRINT2 = "/ef"
     SlashCmdList.EXPLORERSFOOTPRINT = function(message)
         local command = (message or ""):lower():match("^%s*(.-)%s*$")
-        if command == "status" then
+        if command == "toggle" then
+            ns.DB.settings.showOverlay = not ns.DB.settings.showOverlay
+            ns.MapProvider:RequestRefresh(true)
+            print(ns.DB.settings.showOverlay and ns.L.TOGGLE_ON or ns.L.TOGGLE_OFF)
+        elseif command == "status" then
             printStatus()
         elseif command == "debug map" then
             printMapDiagnostics()

@@ -29,9 +29,39 @@ function ns.Options:Initialize()
         initializer:AddSearchTags("map", "heatmap", "movement", "exploration")
     end
 
+    local opacitySetting = Settings.RegisterAddOnSetting(
+        category,
+        "ExplorerFootprint_OverlayOpacity",
+        "overlayOpacity",
+        ns.DB.settings,
+        type(ns.Config.defaultOverlayOpacity),
+        ns.L.SETTING_OVERLAY_OPACITY,
+        ns.Config.defaultOverlayOpacity
+    )
+
+    opacitySetting:SetValueChangedCallback(function(_, value)
+        ns.DB.settings.overlayOpacity = math.max(
+            0,
+            math.min(100, tonumber(value) or ns.Config.defaultOverlayOpacity)
+        )
+        ns.MapProvider:RequestRefresh(true)
+    end)
+
+    local opacityOptions = Settings.CreateSliderOptions(0, 100, 5)
+    if opacityOptions.SetLabelFormatter and MinimalSliderWithSteppersMixin then
+        opacityOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
+    end
+    Settings.CreateSlider(
+        category,
+        opacitySetting,
+        opacityOptions,
+        ns.L.SETTING_OVERLAY_OPACITY_TOOLTIP
+    )
+
     Settings.RegisterAddOnCategory(category)
     self.category = category
     self.setting = setting
+    self.opacitySetting = opacitySetting
 end
 
 function ns.Options:Open()

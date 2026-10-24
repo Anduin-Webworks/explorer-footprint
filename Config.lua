@@ -1,7 +1,7 @@
 local _, ns = ...
 
 ns.Config = {
-    schemaVersion = 1,
+    schemaVersion = 2,
 
     samplingInterval = 2.0,
     movementThreshold = 0.002,
@@ -13,7 +13,7 @@ ns.Config = {
     renderRefreshInterval = 1.0,
     minVisibleIntensity = 0.0,
     minAlpha = 0.20,
-    maxAlpha = 0.65,
+    maxAlpha = 1.00,
 
     -- Absolute logarithmic intensity scale: 10, 100, 1,000, 10,000,
     -- and 100,000 samples align with the five configured color stops.
@@ -29,4 +29,5 @@ ns.Config = {
     },
 
     defaultShowOverlay = true,
+    defaultOverlayOpacity = 55,
 }

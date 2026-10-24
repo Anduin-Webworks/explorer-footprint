@@ -6,9 +6,10 @@
 
 ```lua
 ExplorerFootprintDB = {
-    schemaVersion = 1,
+    schemaVersion = 2,
     settings = {
         showOverlay = true,
+        overlayOpacity = 55,
     },
     maps = {
         [uiMapID] = {

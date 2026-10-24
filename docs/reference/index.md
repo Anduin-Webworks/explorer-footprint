@@ -5,6 +5,7 @@
 | Setting | Type | Default | Storage | Effect |
 | --- | --- | --- | --- | --- |
 | Show heatmap overlay | Boolean | `true` | `ExplorerFootprintDB.settings.showOverlay` | Shows or hides owned World Map heatmap pins. |
+| Heatmap opacity | Number (0–100) | `55` | `ExplorerFootprintDB.settings.overlayOpacity` | Controls the strength of the rectangle-cell overlay over the World Map. |
 
 Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings.
 

@@ -58,11 +58,21 @@ function ns.Database:Initialize()
         db.schemaVersion = 1
     end
 
+    if schemaVersion < 2 then
+        db.schemaVersion = 2
+    end
+
     db.maps = type(db.maps) == "table" and db.maps or {}
     db.settings = type(db.settings) == "table" and db.settings or {}
 
     if type(db.settings.showOverlay) ~= "boolean" then
         db.settings.showOverlay = ns.Config.defaultShowOverlay
+    end
+
+    if type(db.settings.overlayOpacity) ~= "number"
+        or db.settings.overlayOpacity < 0
+        or db.settings.overlayOpacity > 100 then
+        db.settings.overlayOpacity = ns.Config.defaultOverlayOpacity
     end
 
     for mapID, mapData in pairs(db.maps) do
