@@ -14,16 +14,16 @@ flowchart LR
     D --> E[Account-wide SavedVariables]
     E --> F[Map hierarchy projection]
     F --> G[MapCanvas data provider]
-    G --> H[World Map heatmap pins]
+    G --> H[Full-canvas pooled texture layer]
 ```
 
 ## Intensity
 
-Intensity uses an absolute logarithmic sample-count scale rather than the most visited cell on the selected map. A count of 10 is the purple anchor, followed by blue at 100, green at 1,000, yellow at 10,000, and red at 100,000 or more. Counts from 1 through 9 remain visible as purple; unrecorded cells have no heatmap pin. Alpha is capped using centralized configuration.
+Intensity uses an absolute logarithmic sample-count scale rather than the most visited cell on the selected map. Counts of 1, 4, 16, 64, and 256 align with the purple, blue, green, yellow, and red anchors. Counts above 256 remain at the red end of the scale; unrecorded cells have no heatmap texture run. Alpha is capped using centralized configuration.
 
 ## Hierarchical maps
 
-Source data is kept at its original map level. Parent-continent and child-zone overlays are derived when the map is displayed; they are not saved as separate datasets. A source cell is converted through Retail world coordinates and accumulated into the target map's display grid.
+Source data is kept at its original map level. Parent-continent and child-zone overlays are derived when the map is displayed; they are not saved as separate datasets. A source cell is converted through Retail world coordinates and accumulated into the target map's display grid. The renderer stores runtime display cells as numeric counts, quantizes them to a 32-step color lookup table, and merges adjacent same-color cells into pooled texture runs on one full-canvas layer.
 
 ## Boundaries
 

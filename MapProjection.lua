@@ -310,27 +310,18 @@ function ns.MapProjection:IsDisplayCacheCurrent(targetMapID, cached)
     return true
 end
 
-function ns.MapProjection:IncrementSourceCell(sourceMapID, cellIndex, cellX, cellY, delta, revision)
+function ns.MapProjection:IncrementSourceCell(sourceMapID, cellIndex, delta, revision)
     local cached = self.displayCache[sourceMapID]
     if not cached or not self:IsDisplayCacheCurrent(sourceMapID, cached) then
         return false
     end
 
-    local width, height = ns.Config.gridWidth, ns.Config.gridHeight
-    local cellData = cached.cells[cellIndex]
-    if not cellData then
-        cellData = {
-            count = 0,
-            x = (cellX + 0.5) / width,
-            y = (cellY + 0.5) / height,
-        }
-        cached.cells[cellIndex] = cellData
+    local count = (tonumber(cached.cells[cellIndex]) or 0) + delta
+    cached.cells[cellIndex] = count
+    if count > cached.maxCount then
+        cached.maxCount = count
     end
-
-    cellData.count = cellData.count + delta
-    if cellData.count > cached.maxCount then
-        cached.maxCount = cellData.count
-    end
+    cached.runs = nil
     cached.sourceRevisions[sourceMapID] = revision
     return true
 end
@@ -346,7 +337,7 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
 
     local cached = self.displayCache[targetMapID]
     if cached and self:IsDisplayCacheCurrent(targetMapID, cached) then
-        return cached.cells, cached.maxCount
+        return cached.cells, cached.maxCount, cached
     end
 
     local cells = {}
@@ -379,19 +370,10 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
                         local targetCellX = math.min(width - 1, math.floor(targetX * width))
                         local targetCellY = math.min(height - 1, math.floor(targetY * height))
                         local targetCellIndex = targetCellY * width + targetCellX
-                        local targetCell = cells[targetCellIndex]
-                        if not targetCell then
-                            targetCell = {
-                                count = 0,
-                                x = (targetCellX + 0.5) / width,
-                                y = (targetCellY + 0.5) / height,
-                            }
-                            cells[targetCellIndex] = targetCell
-                        end
-
-                        targetCell.count = targetCell.count + count
-                        if targetCell.count > maxCount then
-                            maxCount = targetCell.count
+                        local targetCount = (tonumber(cells[targetCellIndex]) or 0) + count
+                        cells[targetCellIndex] = targetCount
+                        if targetCount > maxCount then
+                            maxCount = targetCount
                         end
                     end
                 end
@@ -403,9 +385,10 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
         sourceRevisions = sourceRevisions,
         cells = cells,
         maxCount = maxCount,
+        runs = nil,
     }
     self.displayCache[targetMapID] = cached
-    return cells, maxCount
+    return cells, maxCount, cached
 end
 
 local function countEntries(values)
@@ -481,11 +464,16 @@ function ns.MapProjection:GetDisplayDiagnostics(targetMapID)
     diagnostics.minX, diagnostics.maxX = 1, 0
     diagnostics.minY, diagnostics.maxY = 1, 0
 
-    for _, cellData in pairs(displayCells) do
-        diagnostics.minX = math.min(diagnostics.minX, cellData.x)
-        diagnostics.maxX = math.max(diagnostics.maxX, cellData.x)
-        diagnostics.minY = math.min(diagnostics.minY, cellData.y)
-        diagnostics.maxY = math.max(diagnostics.maxY, cellData.y)
+    local width, height = ns.Config.gridWidth, ns.Config.gridHeight
+    for cellIndex in pairs(displayCells) do
+        local cellY = math.floor(cellIndex / width)
+        local cellX = cellIndex - (cellY * width)
+        local cellCenterX = (cellX + 0.5) / width
+        local cellCenterY = (cellY + 0.5) / height
+        diagnostics.minX = math.min(diagnostics.minX, cellCenterX)
+        diagnostics.maxX = math.max(diagnostics.maxX, cellCenterX)
+        diagnostics.minY = math.min(diagnostics.minY, cellCenterY)
+        diagnostics.maxY = math.max(diagnostics.maxY, cellCenterY)
     end
 
     if diagnostics.displayCellCount == 0 then

@@ -4,6 +4,22 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.9] - 2026-11-21
+
+### Changed
+
+- Recalibrated the absolute logarithmic heatmap anchors to 1, 4, 16, 64, and 256 samples so low-count cells use the full color scale more effectively.
+- Lowered the per-cell rescale threshold from 1,000,000 to 65,535 so rescaling remains reachable and stored counts stay bounded sooner.
+- Kept the SavedVariables shape and schema unchanged; this only changes rendering thresholds and future rescale behavior.
+
+## [0.2.8] - 2026-11-21
+
+### Performance
+
+- Replaced one World Map frame per display cell with one full-canvas layer pin and a pooled texture renderer.
+- Stored runtime display cells as numeric counts and merged horizontally adjacent cells with the same 32-step color bucket into texture runs.
+- Applied heatmap opacity through the layer pin's alpha without rebuilding display runs or textures.
+
 ## [0.2.7] - 2026-11-21
 
 ### Performance

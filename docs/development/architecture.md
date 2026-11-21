@@ -11,8 +11,8 @@
 | `Sampler.lua` | Throttles map-position reads and filters stationary samples. |
 | `Aggregator.lua` | Converts normalized coordinates to sparse grid-cell counts. |
 | `MapProjection.lua` | Relates source and target map IDs, converts positions through world coordinates, and builds temporary target-map cells. |
-| `MapProvider.lua` | Registers a `MapCanvasDataProviderMixin` provider and creates map pins. |
-| `HeatmapRenderer.lua` | Defines the heatmap pin mixin and visual refresh facade. |
+| `MapProvider.lua` | Registers a `MapCanvasDataProviderMixin` provider and manages one full-canvas heatmap layer pin. |
+| `HeatmapRenderer.lua` | Builds quantized color runs, owns the pooled texture layer pin, and provides the visual refresh facade. |
 | `Options.lua` | Registers the Retail Settings checkbox. |
 | `Debug.lua` | Registers slash commands and the confirmed reset dialog. |
 
@@ -39,7 +39,7 @@ sequenceDiagram
 - The sampler owns runtime reads from `C_Map`; it does not render.
 - The aggregator owns coordinate-to-cell conversion; it does not know about frames.
 - The projection module derives parent/child display cells without duplicating persisted data.
-- The provider owns map pins; it reads persisted counts but does not write raw samples.
+- The provider owns one pooled texture layer pin; it reads projected counts but does not write raw samples.
 - Settings writes only the settings table and asks the provider to refresh.
 - The database stores durable data; render state remains transient.
 
@@ -48,7 +48,7 @@ sequenceDiagram
 - Add locale tables without changing module behavior.
 - Add settings through `Options.lua` and `Config.lua`.
 - Add a new persisted field only with a database schema migration.
-- Add alternate visual scales in `MapProvider.lua` without changing aggregation.
+- Add alternate visual scales in `HeatmapRenderer.lua` without changing aggregation.
 - Adjust hierarchical projection in `MapProjection.lua`; do not persist projected cells.
 
 ## Constraints

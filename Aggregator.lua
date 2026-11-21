@@ -61,7 +61,7 @@ function ns.Aggregator:Record(mapID, x, y)
     ns.MapRevisions = ns.MapRevisions or {}
     local revision = (ns.MapRevisions[mapID] or 0) + 1
     if not didRescale and ns.MapProjection then
-        ns.MapProjection:IncrementSourceCell(mapID, cellIndex, cellX, cellY, 1, revision)
+        ns.MapProjection:IncrementSourceCell(mapID, cellIndex, 1, revision)
     end
     ns.MapRevisions[mapID] = revision
 

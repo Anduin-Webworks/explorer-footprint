@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 ns.ADDON_NAME = addonName
 ns.DISPLAY_NAME = "Explorer's Footprint"
-ns.VERSION = "0.2.7"
+ns.VERSION = "0.2.9"
 ns.initialized = false
 
 local eventFrame = CreateFrame("Frame")

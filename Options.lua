@@ -44,7 +44,7 @@ function ns.Options:Initialize()
             0,
             math.min(100, tonumber(value) or ns.Config.defaultOverlayOpacity)
         )
-        ns.MapProvider:RequestRefresh(true)
+        ns.MapProvider:SetOverlayOpacity()
     end)
 
     local opacityOptions = Settings.CreateSliderOptions(0, 100, 5)

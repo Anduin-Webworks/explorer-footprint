@@ -8,17 +8,17 @@ ns.Config = {
 
     gridWidth = 64,
     gridHeight = 64,
-    maxCellCount = 1000000,
+    maxCellCount = 65535,
 
     renderRefreshInterval = 1.0,
     minVisibleIntensity = 0.0,
     minAlpha = 0.20,
     maxAlpha = 1.00,
 
-    -- Absolute logarithmic intensity scale: 10, 100, 1,000, 10,000,
-    -- and 100,000 samples align with the five configured color stops.
-    intensityMinCount = 10,
-    intensityMaxCount = 100000,
+    -- Absolute logarithmic intensity scale: 1, 4, 16, 64, and 256
+    -- samples align with the five configured color stops.
+    intensityMinCount = 1,
+    intensityMaxCount = 256,
 
     colorStops = {
         { position = 0.00, color = { 0.65, 0.05, 1.00 } }, -- purple

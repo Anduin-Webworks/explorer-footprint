@@ -20,8 +20,8 @@
 
 1. Keep persisted counts independent of visual choices.
 2. Confirm the current MapCanvas API and pin template behavior.
-3. Reuse `RemoveAllPinsByTemplate` before repopulating owned pins.
-4. Test map changes, zoom, pan, map resize, and interaction with Blizzard pins.
+3. Implement provider cleanup through `RemoveAllData` and reuse the pooled layer pin and textures.
+4. Test map changes, zoom, pan, map resize, opacity changes, and interaction with Blizzard pins.
 
 ## Release checklist
 

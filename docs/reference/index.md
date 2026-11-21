@@ -4,10 +4,10 @@
 
 | Setting | Type | Default | Storage | Effect |
 | --- | --- | --- | --- | --- |
-| Show heatmap overlay | Boolean | `true` | `ExplorerFootprintDB.settings.showOverlay` | Shows or hides owned World Map heatmap pins. |
+| Show heatmap overlay | Boolean | `true` | `ExplorerFootprintDB.settings.showOverlay` | Shows or hides the owned World Map heatmap layer. |
 | Heatmap opacity | Number (0–100) | `55` | `ExplorerFootprintDB.settings.overlayOpacity` | Controls the strength of the rectangle-cell overlay over the World Map. |
 
-Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings.
+Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings. The current absolute logarithmic anchors are 1, 4, 16, 64, and 256 samples; the per-cell rescale ceiling is 65,535.
 
 ## Slash commands
 
@@ -29,7 +29,7 @@ The implementation uses:
 - `C_Map.GetWorldPosFromMapPos` and `C_Map.GetMapPosFromWorldPos` to project source cells into a selected related map.
 - `C_Map.GetMapInfo` to follow parent-map relationships.
 - `MapCanvasDataProviderMixin` and `WorldMapFrame:AddDataProvider` for map integration.
-- `MapCanvasPinMixin` and `AcquirePin` for heatmap cells.
+- `MapCanvasPinMixin`, `AcquirePin`, and `CreateTexturePool` for the full-canvas heatmap layer.
 - `Settings.RegisterVerticalLayoutCategory`, `Settings.RegisterAddOnSetting`, and `Settings.CreateCheckbox` for the settings page.
 
 The map-position API may return `nil` in restricted content. The addon treats that as a skipped sample. API behavior, template names, and the TOC interface number must be checked against the target Retail build before release.
