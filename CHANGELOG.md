@@ -4,6 +4,14 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.7] - 2026-11-21
+
+### Performance
+
+- Replaced the global display-cache revision with per-source-map revisions, so unrelated map samples no longer rebuild an overlay.
+- Updated same-map display cells incrementally for ordinary samples and retained full rebuilds when a map is rescaled.
+- Cached related-map checks and validated affine map transforms, falling back to the existing per-cell API conversion when a transform is unavailable or inaccurate.
+
 ## [0.2.6] - 2026-10-20
 
 ### Fixed

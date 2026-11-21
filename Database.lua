@@ -83,7 +83,7 @@ function ns.Database:Initialize()
 
     db.schemaVersion = ns.Config.schemaVersion
     ns.DB = db
-    ns.DataRevision = 0
+    ns.MapRevisions = {}
     ExplorerFootprintDB = db
 end
 
@@ -102,12 +102,15 @@ function ns.Database:GetMap(mapID, create)
         ns.DB.maps[mapID] = mapData
     end
 
-    return normalizeMap(mapData)
+    return mapData
 end
 
 function ns.Database:ResetMaps()
     ns.DB.maps = {}
-    ns.DataRevision = (ns.DataRevision or 0) + 1
+    ns.MapRevisions = {}
+    if ns.MapProjection then
+        ns.MapProjection:ClearDisplayCache()
+    end
 end
 
 function ns.Database:GetTotals()

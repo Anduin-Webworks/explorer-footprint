@@ -53,11 +53,17 @@ function ns.Aggregator:Record(mapID, x, y)
         mapData.maxCount = count
     end
 
-    if count >= ns.Config.maxCellCount then
+    local didRescale = count >= ns.Config.maxCellCount
+    if didRescale then
         rescaleMap(mapData)
     end
 
-    ns.DataRevision = (ns.DataRevision or 0) + 1
+    ns.MapRevisions = ns.MapRevisions or {}
+    local revision = (ns.MapRevisions[mapID] or 0) + 1
+    if not didRescale and ns.MapProjection then
+        ns.MapProjection:IncrementSourceCell(mapID, cellIndex, cellX, cellY, 1, revision)
+    end
+    ns.MapRevisions[mapID] = revision
 
     if ns.MapProvider then
         ns.MapProvider:RequestRefresh(false)
@@ -70,5 +76,10 @@ function ns.Aggregator:RescaleMap(mapID)
     local mapData = ns.Database:GetMap(mapID, false)
     if mapData then
         rescaleMap(mapData)
+        ns.MapRevisions = ns.MapRevisions or {}
+        ns.MapRevisions[mapID] = ((ns.MapRevisions[mapID] or 0) + 1)
+        if ns.MapProvider then
+            ns.MapProvider:RequestRefresh(false)
+        end
     end
 end

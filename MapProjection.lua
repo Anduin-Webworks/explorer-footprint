@@ -2,8 +2,13 @@ local _, ns = ...
 
 ns.MapProjection = {
     mapInfoCache = {},
+    relatedCache = {},
+    transforms = {},
     displayCache = {},
 }
+
+local IDENTITY_TRANSFORM = { 0, 1, 0, 0, 0, 1 }
+local TRANSFORM_TOLERANCE = 0.0001
 
 local function isValidCoordinate(x, y)
     return type(x) == "number" and type(y) == "number"
@@ -59,17 +64,37 @@ function ns.MapProjection:IsDescendant(mapID, ancestorMapID)
 end
 
 function ns.MapProjection:AreRelated(firstMapID, secondMapID)
-    return self:IsDescendant(firstMapID, secondMapID)
-        or self:IsDescendant(secondMapID, firstMapID)
-end
-
-function ns.MapProjection:ConvertPosition(sourceMapID, x, y, targetMapID)
-    if sourceMapID == targetMapID then
-        return x, y
+    if not firstMapID or not secondMapID then
+        return false
     end
 
-    if not isValidCoordinate(x, y) then
-        return nil
+    local firstCache = self.relatedCache[firstMapID]
+    if not firstCache then
+        firstCache = {}
+        self.relatedCache[firstMapID] = firstCache
+    end
+
+    if firstCache[secondMapID] ~= nil then
+        return firstCache[secondMapID]
+    end
+
+    local related = self:IsDescendant(firstMapID, secondMapID)
+        or self:IsDescendant(secondMapID, firstMapID)
+    firstCache[secondMapID] = related
+
+    local secondCache = self.relatedCache[secondMapID]
+    if not secondCache then
+        secondCache = {}
+        self.relatedCache[secondMapID] = secondCache
+    end
+    secondCache[firstMapID] = related
+
+    return related
+end
+
+function ns.MapProjection:ConvertRaw(sourceMapID, x, y, targetMapID)
+    if sourceMapID == targetMapID then
+        return x, y
     end
 
     local continentID, worldPosition = C_Map.GetWorldPosFromMapPos(sourceMapID, { x = x, y = y })
@@ -90,7 +115,163 @@ function ns.MapProjection:ConvertPosition(sourceMapID, x, y, targetMapID)
         return nil
     end
 
-    local targetX, targetY = getXY(targetPosition)
+    return getXY(targetPosition)
+end
+
+local function approximatelyEqual(first, second)
+    return math.abs(first - second) <= TRANSFORM_TOLERANCE
+end
+
+local function buildTransform(
+    firstX,
+    firstY,
+    secondX,
+    secondY,
+    thirdX,
+    thirdY,
+    firstSourceX,
+    firstSourceY,
+    secondSourceX,
+    thirdSourceY
+)
+    local scaleX = (secondX - firstX) / (secondSourceX - firstSourceX)
+    local scaleY = (thirdX - firstX) / (thirdSourceY - firstSourceY)
+    local offsetX = firstX - (scaleX * firstSourceX) - (scaleY * firstSourceY)
+    local scaleXForY = (secondY - firstY) / (secondSourceX - firstSourceX)
+    local scaleYForY = (thirdY - firstY) / (thirdSourceY - firstSourceY)
+    local offsetY = firstY - (scaleXForY * firstSourceX) - (scaleYForY * firstSourceY)
+
+    return {
+        offsetX,
+        scaleX,
+        scaleY,
+        offsetY,
+        scaleXForY,
+        scaleYForY,
+    }
+end
+
+local function applyTransform(transform, x, y)
+    return
+        transform[1] + transform[2] * x + transform[3] * y,
+        transform[4] + transform[5] * x + transform[6] * y
+end
+
+function ns.MapProjection:GetTransform(sourceMapID, targetMapID)
+    if sourceMapID == targetMapID then
+        return IDENTITY_TRANSFORM
+    end
+
+    local sourceCache = self.transforms[sourceMapID]
+    if not sourceCache then
+        sourceCache = {}
+        self.transforms[sourceMapID] = sourceCache
+    end
+
+    local cached = sourceCache[targetMapID]
+    if cached ~= nil then
+        return cached or nil
+    end
+
+    local probeSets = {
+        {
+            firstX = 0,
+            firstY = 0,
+            secondX = 1,
+            secondY = 0,
+            thirdX = 0,
+            thirdY = 1,
+            extraX = 0.5,
+            extraY = 0.5,
+        },
+        {
+            firstX = 0.25,
+            firstY = 0.25,
+            secondX = 0.75,
+            secondY = 0.25,
+            thirdX = 0.25,
+            thirdY = 0.75,
+            extraX = 0.75,
+            extraY = 0.75,
+        },
+    }
+
+    for _, probes in ipairs(probeSets) do
+        local firstX, firstY = self:ConvertRaw(
+            sourceMapID,
+            probes.firstX,
+            probes.firstY,
+            targetMapID
+        )
+        local secondX, secondY = self:ConvertRaw(
+            sourceMapID,
+            probes.secondX,
+            probes.secondY,
+            targetMapID
+        )
+        local thirdX, thirdY = self:ConvertRaw(
+            sourceMapID,
+            probes.thirdX,
+            probes.thirdY,
+            targetMapID
+        )
+
+        if firstX and firstY and secondX and secondY and thirdX and thirdY then
+            local transform = buildTransform(
+                firstX,
+                firstY,
+                secondX,
+                secondY,
+                thirdX,
+                thirdY,
+                probes.firstX,
+                probes.firstY,
+                probes.secondX,
+                probes.thirdY
+            )
+            local actualX, actualY = self:ConvertRaw(
+                sourceMapID,
+                probes.extraX,
+                probes.extraY,
+                targetMapID
+            )
+            local expectedX, expectedY = applyTransform(
+                transform,
+                probes.extraX,
+                probes.extraY
+            )
+
+            if actualX and actualY
+                and approximatelyEqual(actualX, expectedX)
+                and approximatelyEqual(actualY, expectedY) then
+                sourceCache[targetMapID] = transform
+                return transform
+            end
+        end
+    end
+
+    sourceCache[targetMapID] = false
+    return nil
+end
+
+function ns.MapProjection:ConvertPosition(sourceMapID, x, y, targetMapID)
+    if sourceMapID == targetMapID then
+        return x, y
+    end
+
+    if not isValidCoordinate(x, y) then
+        return nil
+    end
+
+    local transform = self:GetTransform(sourceMapID, targetMapID)
+    if transform then
+        local targetX, targetY = applyTransform(transform, x, y)
+        if isValidCoordinate(targetX, targetY) then
+            return targetX, targetY
+        end
+    end
+
+    local targetX, targetY = self:ConvertRaw(sourceMapID, x, y, targetMapID)
     if not isValidCoordinate(targetX, targetY) then
         return nil
     end
@@ -98,26 +279,87 @@ function ns.MapProjection:ConvertPosition(sourceMapID, x, y, targetMapID)
     return targetX, targetY
 end
 
+local function getMapRevision(mapID)
+    return (ns.MapRevisions and ns.MapRevisions[mapID]) or 0
+end
+
+function ns.MapProjection:IsDisplayCacheCurrent(targetMapID, cached)
+    if not cached or type(cached.sourceRevisions) ~= "table"
+        or not ns.DB or type(ns.DB.maps) ~= "table" then
+        return false
+    end
+
+    local currentSources = {}
+    for sourceMapID, mapData in pairs(ns.DB.maps) do
+        local numericSourceMapID = tonumber(sourceMapID)
+        if numericSourceMapID and type(mapData) == "table"
+            and self:AreRelated(numericSourceMapID, targetMapID) then
+            currentSources[numericSourceMapID] = true
+            if cached.sourceRevisions[numericSourceMapID] ~= getMapRevision(numericSourceMapID) then
+                return false
+            end
+        end
+    end
+
+    for sourceMapID in pairs(cached.sourceRevisions) do
+        if not currentSources[sourceMapID] then
+            return false
+        end
+    end
+
+    return true
+end
+
+function ns.MapProjection:IncrementSourceCell(sourceMapID, cellIndex, cellX, cellY, delta, revision)
+    local cached = self.displayCache[sourceMapID]
+    if not cached or not self:IsDisplayCacheCurrent(sourceMapID, cached) then
+        return false
+    end
+
+    local width, height = ns.Config.gridWidth, ns.Config.gridHeight
+    local cellData = cached.cells[cellIndex]
+    if not cellData then
+        cellData = {
+            count = 0,
+            x = (cellX + 0.5) / width,
+            y = (cellY + 0.5) / height,
+        }
+        cached.cells[cellIndex] = cellData
+    end
+
+    cellData.count = cellData.count + delta
+    if cellData.count > cached.maxCount then
+        cached.maxCount = cellData.count
+    end
+    cached.sourceRevisions[sourceMapID] = revision
+    return true
+end
+
+function ns.MapProjection:ClearDisplayCache()
+    self.displayCache = {}
+end
+
 function ns.MapProjection:BuildDisplayCells(targetMapID)
     if not targetMapID then
         return {}, 0
     end
 
-    local revision = ns.DataRevision or 0
     local cached = self.displayCache[targetMapID]
-    if cached and cached.revision == revision then
+    if cached and self:IsDisplayCacheCurrent(targetMapID, cached) then
         return cached.cells, cached.maxCount
     end
 
     local cells = {}
     local maxCount = 0
     local width, height = ns.Config.gridWidth, ns.Config.gridHeight
+    local sourceRevisions = {}
 
     for sourceMapID, mapData in pairs(ns.DB.maps) do
         local numericSourceMapID = tonumber(sourceMapID)
         if numericSourceMapID and type(mapData) == "table"
             and type(mapData.cells) == "table"
             and self:AreRelated(numericSourceMapID, targetMapID) then
+            sourceRevisions[numericSourceMapID] = getMapRevision(numericSourceMapID)
 
             for cellIndex, count in pairs(mapData.cells) do
                 count = tonumber(count) or 0
@@ -158,7 +400,7 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
     end
 
     cached = {
-        revision = revision,
+        sourceRevisions = sourceRevisions,
         cells = cells,
         maxCount = maxCount,
     }

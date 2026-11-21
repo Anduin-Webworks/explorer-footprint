@@ -4,7 +4,7 @@ Explorer's Footprint is a World of Warcraft Retail addon that records outdoor pl
 
 ## Status
 
-Version `0.2.6` makes the heatmap opacity control reach full opacity for the strongest cells at 100%. It also includes `/footprint toggle`, the persisted heatmap opacity control from 0% to 100%, and the stable rectangle-cell renderer with its absolute logarithmic intensity scale. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
+Version `0.2.7` reduces World Map refresh work by tracking revisions per source map, incrementally updating the common same-map case, and caching validated map projections. It preserves the existing heatmap data format and the 0.2.6 opacity, toggle, and rectangle-cell behavior. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
 
 ## Features
 
