@@ -4,6 +4,20 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.8] - 2026-11-21
+
+### Performance
+
+- Avoided re-normalizing every map cell when `Database:GetMap` returns a map during sampling.
+- Kept normalization during database initialization, preserving compatibility with existing SavedVariables and the current schema version.
+
+## [0.2.7] - 2026-10-30
+
+### Changed
+
+- Increased the heatmap grid from 64 × 64 to 256 × 256, making each new cell one quarter the width and height of the previous cell.
+- Migrated existing 64 × 64 cell counts to the center of their corresponding 4 × 4 blocks without changing aggregate sample totals.
+
 ## [0.2.6] - 2026-10-20
 
 ### Fixed

@@ -6,7 +6,7 @@
 
 ```lua
 ExplorerFootprintDB = {
-    schemaVersion = 2,
+    schemaVersion = 3,
     settings = {
         showOverlay = true,
         overlayOpacity = 55,
@@ -23,13 +23,13 @@ ExplorerFootprintDB = {
 }
 ```
 
-`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 64 × 64, configured in `Config.lua`.
+`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 256 × 256, configured in `Config.lua`. Each former 64 × 64 cell is migrated to the center of its corresponding 4 × 4 block, preserving the count without inventing a more precise historical position.
 
 ## Lifecycle
 
 1. WoW loads `ExplorerFootprintDB` before addon code.
-2. `Database:Initialize()` creates missing tables, validates map records, applies defaults, and updates `schemaVersion`.
-3. `Aggregator:Record()` increments a map's cell and summary counters.
+2. `Database:Initialize()` creates missing tables, validates and normalizes map records, applies defaults, and updates `schemaVersion`.
+3. `Aggregator:Record()` obtains the already-normalized map record and increments its cell and summary counters without scanning the rest of the map.
 4. The database is written by WoW's normal SavedVariables lifecycle.
 5. When a cell reaches the configured ceiling, counts for that map are halved and zero cells are removed.
 6. `/footprint reset` replaces the maps table after confirmation.
@@ -52,4 +52,4 @@ This means a sample recorded in a zone can appear on its continent map, and an e
 
 Migrations are monotonic and must preserve existing data whenever possible. A future schema change belongs in `Database.lua`, with a new changelog entry and a focused migration test or in-game verification case.
 
-The current repository contains only schema version `1`; later migrations are **Not applicable yet**.
+Schema version `3` migrates the original 64 × 64 cell indexes to the current 256 × 256 grid. Migration is performed once during database initialization and preserves each map's aggregate sample count.

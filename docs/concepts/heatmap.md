@@ -1,6 +1,6 @@
 # Heatmap concept
 
-Explorer's Footprint turns movement into a density visualization. It samples the player's normalized map position, assigns the sample to a cell in a fixed grid, and increments that cell's count.
+Explorer's Footprint turns movement into a density visualization. It samples the player's normalized map position, assigns the sample to a cell in a fixed 256 × 256 grid, and increments that cell's count. Each cell is one quarter the width and height of the former 64 × 64 grid cell.
 
 It does not store a route. Two visits to the same cell increase its density; the original timestamps and exact path are not retained.
 
