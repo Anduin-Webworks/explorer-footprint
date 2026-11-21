@@ -1,13 +1,15 @@
 local _, ns = ...
 
 ns.Config = {
-    schemaVersion = 2,
+    schemaVersion = 3,
 
     samplingInterval = 2.0,
     movementThreshold = 0.002,
 
-    gridWidth = 64,
-    gridHeight = 64,
+    -- Each former 64 x 64 cell is split into a 4 x 4 block of smaller
+    -- cells, giving the heatmap four times the resolution on each axis.
+    gridWidth = 256,
+    gridHeight = 256,
     maxCellCount = 1000000,
 
     renderRefreshInterval = 1.0,

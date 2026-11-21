@@ -2,6 +2,62 @@ local _, ns = ...
 
 ns.Database = {}
 
+local LEGACY_GRID_WIDTH = 64
+local LEGACY_GRID_HEIGHT = 64
+
+local function migrateGridResolution(db)
+    if type(db.maps) ~= "table" then
+        return
+    end
+
+    local widthScale = ns.Config.gridWidth / LEGACY_GRID_WIDTH
+    local heightScale = ns.Config.gridHeight / LEGACY_GRID_HEIGHT
+
+    for _, mapData in pairs(db.maps) do
+        if type(mapData) == "table" and type(mapData.cells) == "table" then
+            local migratedCells = {}
+            local sampleCount, maxCount = 0, 0
+
+            for cellIndex, rawCount in pairs(mapData.cells) do
+                local numericIndex = tonumber(cellIndex)
+                local count = math.floor(tonumber(rawCount) or 0)
+                if numericIndex and numericIndex == math.floor(numericIndex)
+                    and numericIndex >= 0
+                    and numericIndex < LEGACY_GRID_WIDTH * LEGACY_GRID_HEIGHT
+                    and count > 0 then
+
+                    local oldCellY = math.floor(numericIndex / LEGACY_GRID_WIDTH)
+                    local oldCellX = numericIndex - (oldCellY * LEGACY_GRID_WIDTH)
+
+                    -- Place the old count in the center of its new block.
+                    -- This preserves counts without inventing precision that
+                    -- was not present in the legacy data.
+                    local newCellX = math.min(
+                        ns.Config.gridWidth - 1,
+                        math.floor((oldCellX + 0.5) * widthScale)
+                    )
+                    local newCellY = math.min(
+                        ns.Config.gridHeight - 1,
+                        math.floor((oldCellY + 0.5) * heightScale)
+                    )
+                    local newCellIndex = newCellY * ns.Config.gridWidth + newCellX
+                    local newCount = (migratedCells[newCellIndex] or 0) + count
+                    migratedCells[newCellIndex] = newCount
+
+                    sampleCount = sampleCount + count
+                    if newCount > maxCount then
+                        maxCount = newCount
+                    end
+                end
+            end
+
+            mapData.cells = migratedCells
+            mapData.sampleCount = sampleCount
+            mapData.maxCount = maxCount
+        end
+    end
+end
+
 local function isFiniteNumber(value)
     return type(value) == "number" and value == value and value ~= math.huge and value ~= -math.huge
 end
@@ -62,6 +118,11 @@ function ns.Database:Initialize()
         db.schemaVersion = 2
     end
 
+    if schemaVersion < 3 then
+        migrateGridResolution(db)
+        db.schemaVersion = 3
+    end
+
     db.maps = type(db.maps) == "table" and db.maps or {}
     db.settings = type(db.settings) == "table" and db.settings or {}
 
@@ -102,7 +163,7 @@ function ns.Database:GetMap(mapID, create)
         ns.DB.maps[mapID] = mapData
     end
 
-    return normalizeMap(mapData)
+    return mapData
 end
 
 function ns.Database:ResetMaps()
