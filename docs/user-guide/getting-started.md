@@ -13,14 +13,17 @@ The installed directory should be packaged as `ExplorerFootprint` and contain `E
 
 Open **Game Menu → Options → AddOns → Explorer's Footprint** and use **Show heatmap overlay** to control rendering.
 
-This setting controls the map overlay. The initial implementation continues to collect movement data while the overlay is hidden so that hiding the visualization does not erase or interrupt the account-wide footprint.
+Each sample represents a crossed map cell from movement. Dark purple indicates fewer accumulated crossings, while bright yellow indicates more. The opacity slider changes visibility without changing the stored counts. Hiding the visualization does not erase or interrupt the account-wide footprint.
 
 ## Slash commands
 
 ```text
 /footprint          Open settings
 /ef                Open settings
+/footprint help     Show available commands
+/footprint toggle   Toggle the heatmap
 /footprint status   Print map, cell, and sample totals
+/footprint debug map  Print map diagnostics
 /footprint reset    Ask for confirmation, then clear all map data
 ```
 
@@ -29,6 +32,7 @@ Reset is destructive and cannot be undone by the addon. It does not reset the di
 ## What to expect
 
 - The heatmap is sparse and appears only for maps with recorded cells.
-- Stationary time is not repeatedly counted; samples are recorded on movement or map change.
+- Stationary time is not repeatedly counted; same-map movement is rasterized across crossed cells.
+- On the first launch after this grid upgrade, existing footprints are migrated to the 256 × 256 grid while preserving their aggregate counts.
 - Instances and other areas where the position API returns no usable value are skipped.
 - Data is saved locally in the account SavedVariables file and is not transmitted.

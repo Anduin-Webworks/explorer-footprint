@@ -4,62 +4,99 @@ ns.Database = {}
 
 local LEGACY_GRID_WIDTH = 64
 local LEGACY_GRID_HEIGHT = 64
+local MIGRATION_CELL_COUNT = 4
+
+local function isFiniteNumber(value)
+    return type(value) == "number" and value == value and value ~= math.huge and value ~= -math.huge
+end
 
 local function migrateGridResolution(db)
     if type(db.maps) ~= "table" then
         return
     end
 
+    local oldMaps = db.maps
     local widthScale = ns.Config.gridWidth / LEGACY_GRID_WIDTH
     local heightScale = ns.Config.gridHeight / LEGACY_GRID_HEIGHT
+    local migratedMaps = {}
 
-    for _, mapData in pairs(db.maps) do
-        if type(mapData) == "table" and type(mapData.cells) == "table" then
-            local migratedCells = {}
-            local sampleCount, maxCount = 0, 0
+    -- Keep the complete pre-migration table alive while the new table is built.
+    -- This is intentionally a SavedVariables backup, not a runtime-only copy.
+    db.backup_v2 = oldMaps
 
-            for cellIndex, rawCount in pairs(mapData.cells) do
-                local numericIndex = tonumber(cellIndex)
-                local count = math.floor(tonumber(rawCount) or 0)
-                if numericIndex and numericIndex == math.floor(numericIndex)
-                    and numericIndex >= 0
-                    and numericIndex < LEGACY_GRID_WIDTH * LEGACY_GRID_HEIGHT
-                    and count > 0 then
+    for mapID, mapData in pairs(oldMaps) do
+        if type(mapData) == "table" then
+            local migratedMap = {
+                sampleCount = 0,
+                maxCount = 0,
+                cells = {},
+            }
 
-                    local oldCellY = math.floor(numericIndex / LEGACY_GRID_WIDTH)
-                    local oldCellX = numericIndex - (oldCellY * LEGACY_GRID_WIDTH)
+            if type(mapData.cells) == "table" then
+                local sampleCount, maxCount = 0, 0
+                for cellIndex, rawCount in pairs(mapData.cells) do
+                    local numericIndex = tonumber(cellIndex)
+                    local count = math.floor(tonumber(rawCount) or 0)
+                    if numericIndex and numericIndex == math.floor(numericIndex)
+                        and numericIndex >= 0
+                        and numericIndex < LEGACY_GRID_WIDTH * LEGACY_GRID_HEIGHT
+                        and count > 0 then
 
-                    -- Place the old count in the center of its new block.
-                    -- This preserves counts without inventing precision that
-                    -- was not present in the legacy data.
-                    local newCellX = math.min(
-                        ns.Config.gridWidth - 1,
-                        math.floor((oldCellX + 0.5) * widthScale)
-                    )
-                    local newCellY = math.min(
-                        ns.Config.gridHeight - 1,
-                        math.floor((oldCellY + 0.5) * heightScale)
-                    )
-                    local newCellIndex = newCellY * ns.Config.gridWidth + newCellX
-                    local newCount = (migratedCells[newCellIndex] or 0) + count
-                    migratedCells[newCellIndex] = newCount
+                        local oldCellY = math.floor(numericIndex / LEGACY_GRID_WIDTH)
+                        local oldCellX = numericIndex - (oldCellY * LEGACY_GRID_WIDTH)
+                        local blockX = math.floor(oldCellX * widthScale)
+                        local blockY = math.floor(oldCellY * heightScale)
+                        local centerX = blockX + math.floor((widthScale - 2) / 2)
+                        local centerY = blockY + math.floor((heightScale - 2) / 2)
+                        local baseCount = math.floor(count / MIGRATION_CELL_COUNT)
+                        local remainder = count - (baseCount * MIGRATION_CELL_COUNT)
 
-                    sampleCount = sampleCount + count
-                    if newCount > maxCount then
-                        maxCount = newCount
+                        -- Spread counts across the center 2 x 2 cells. The
+                        -- remainder is distributed one at a time so the
+                        -- aggregate count is preserved exactly, including for
+                        -- counts below four.
+                        for offset = 0, MIGRATION_CELL_COUNT - 1 do
+                            local offsetX = offset % 2
+                            local offsetY = math.floor(offset / 2)
+                            local share = baseCount + (offset < remainder and 1 or 0)
+                            if share > 0 then
+                                local newCellX = math.min(
+                                    ns.Config.gridWidth - 1,
+                                    centerX + offsetX
+                                )
+                                local newCellY = math.min(
+                                    ns.Config.gridHeight - 1,
+                                    centerY + offsetY
+                                )
+                                local newCellIndex = newCellY * ns.Config.gridWidth + newCellX
+                                migratedMap.cells[newCellIndex] = share
+                                if share > maxCount then
+                                    maxCount = share
+                                end
+                            end
+                        end
+
+                        sampleCount = sampleCount + count
                     end
                 end
+
+                migratedMap.sampleCount = sampleCount
+                migratedMap.maxCount = maxCount
             end
 
-            mapData.cells = migratedCells
-            mapData.sampleCount = sampleCount
-            mapData.maxCount = maxCount
+            -- Preserve a larger valid aggregate from legacy data if the
+            -- source table was internally inconsistent. normalizeMap() will
+            -- continue to validate it after the migration.
+            local oldSampleCount = tonumber(mapData.sampleCount)
+            if isFiniteNumber(oldSampleCount) and oldSampleCount >= migratedMap.sampleCount then
+                migratedMap.sampleCount = math.floor(oldSampleCount)
+            end
+
+            migratedMaps[mapID] = migratedMap
         end
     end
-end
 
-local function isFiniteNumber(value)
-    return type(value) == "number" and value == value and value ~= math.huge and value ~= -math.huge
+    db.maps = migratedMaps
 end
 
 local function normalizeMap(mapData)
@@ -71,6 +108,8 @@ local function normalizeMap(mapData)
         mapData.cells = {}
     end
 
+    -- Retain maxCount as a cheap diagnostic and rescale summary. It does not
+    -- participate in the absolute color scale.
     if not isFiniteNumber(mapData.maxCount) or mapData.maxCount < 0 then
         mapData.maxCount = 0
     end
@@ -144,7 +183,7 @@ function ns.Database:Initialize()
 
     db.schemaVersion = ns.Config.schemaVersion
     ns.DB = db
-    ns.DataRevision = 0
+    ns.MapRevisions = {}
     ExplorerFootprintDB = db
 end
 
@@ -168,7 +207,11 @@ end
 
 function ns.Database:ResetMaps()
     ns.DB.maps = {}
-    ns.DataRevision = (ns.DataRevision or 0) + 1
+    ns.DB.backup_v2 = nil
+    ns.MapRevisions = {}
+    if ns.MapProjection then
+        ns.MapProjection:ClearDisplayCache()
+    end
 end
 
 function ns.Database:GetTotals()

@@ -4,7 +4,7 @@ Explorer's Footprint is a World of Warcraft Retail addon that records outdoor pl
 
 ## Status
 
-Version `0.2.8` avoids re-normalizing every stored map cell during sampling while preserving the 0.2.7 256 × 256 heatmap resolution and migration behavior. Existing SavedVariables remain compatible because map normalization still runs during database initialization. It also retains the stable rectangle-cell renderer, full-opacity support for the strongest cells, `/footprint toggle`, and the persisted heatmap opacity control. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
+Version `0.2.22` keeps movement data at 256 × 256 while rendering smaller map types at a coarser resolution for more readable heatmap rectangles, and applies the heatmap pin frame level correctly on zone maps. It supports Retail interface `120107`; existing SavedVariables remain loadable, including the temporary migration backup. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
 
 ## Features
 
@@ -34,6 +34,7 @@ The slash commands are:
 
 ```text
 /footprint       Open the settings page
+/footprint help     Show available commands
 /footprint toggle   Toggle the heatmap display
 /footprint status   Print database and sampler status
 /footprint debug map   Print current map and projection diagnostics

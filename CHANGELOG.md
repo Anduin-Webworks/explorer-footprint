@@ -4,19 +4,128 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.22] - 2026-11-22
+
+### Fixed
+
+- Explicitly apply the heatmap pin's `PIN_FRAME_LEVEL_AREA_POI` level because the full-canvas pin does not use Blizzard's normalized `SetPosition()` path; zone detail layers can no longer cover the rendered cells.
+
+## [0.2.21] - 2026-11-21
+
+### Changed
+
+- Kept persisted movement cells at 256 × 256 while rendering micro maps at 64 × 64 and zones or dungeons at 128 × 128 for larger, more readable rectangles.
+- Added render-resolution information to `/footprint debug map`; runtime display caches now invalidate correctly when aggregated cells change.
+
+## [0.2.20] - 2026-11-21
+
+### Fixed
+
+- Explicitly invoke the heatmap pin mixin's `OnLoad` handler from the XML template so its texture pool is initialized before World Map refresh.
+- Keep pool creation and release defensive for pin lifecycle callbacks that occur before or without the template load hook.
+
+## [0.2.19] - 2026-11-21
+
+### Fixed
+
+- Corrected the pooled renderer's `BuildRuns` method binding so numeric display-cell counts are passed to the run builder instead of the renderer table.
+
+## [0.2.18] - 2026-11-21
+
+### Fixed
+
+- Always report renderer state in `/footprint debug map`, including when the provider has not refreshed since login.
+- Refresh the provider before printing renderer diagnostics so the command is self-contained.
+- Preserve renderer counters with cached texture runs and clear them when a display cache is incrementally invalidated.
+
+## [0.2.17] - 2026-11-21
+
+### Changed
+
+- Extended renderer diagnostics with the first display-cell value type and fields to identify mixed-version runtime data safely.
+
+## [0.2.16] - 2026-11-21
+
+### Fixed
+
+- Made heatmap run generation explicitly accept bucket `0` and tolerate legacy runtime display-cell records while transitioning to numeric counts.
+- Extended renderer diagnostics with positive-cell and bucketed-cell counts.
+
+## [0.2.15] - 2026-11-21
+
+### Added
+
+- Added renderer state to `/footprint debug map`, including display-cell count, texture-run count, and pin-acquisition status, without persisting diagnostic data.
+
+## [0.2.14] - 2026-11-21
+
+### Fixed
+
+- Anchored the pooled heatmap pin directly to Blizzard's map canvas so recorded cells remain visible on the selected map during pan and zoom.
+- Updated the Retail interface metadata to include `120107`.
+
+## [0.2.13] - 2026-11-21
+
+### Changed
+
+- Moved the shared map-position coordinate helper into `Utils.lua`.
+- Reused display-build projection statistics in map diagnostics instead of converting every stored cell a second time.
+- Renamed `Debug.lua` to `Commands.lua` to reflect its slash-command and reset-dialog responsibilities.
+- Replaced the sampler's per-frame elapsed-time handler with `C_Timer.NewTicker`.
+- Removed the unused intensity filter and kept `maxCount` documented as a diagnostic/rescale summary rather than a color-scale input.
+- Simplified Settings callbacks so the registered backing table remains the single writer for persisted settings.
+
+## [0.2.12] - 2026-11-21
+
+### Changed
+
+- Increased the heatmap grid from 64 × 64 to 256 × 256.
+- Migrated existing 64 × 64 cells across the center 2 × 2 cells of their corresponding 4 × 4 blocks, preserving aggregate counts while reducing the visible polka-dot effect.
+- Created a one-time `ExplorerFootprintDB.backup_v2` SavedVariables backup before the migration; resetting map data also removes that backup.
+- Kept the migration compatible with the current crossing-based sampler, per-map display revisions, pooled renderer, and viridis-style color scale.
+
+## [0.2.11] - 2026-11-21
+
+### Changed
+
+- Raised the minimum heatmap alpha from 0.20 to 0.45 so first-visit cells remain visible at the default opacity.
+- Made a viridis-style dark-to-bright ramp the default and retained the former rainbow ramp as `Config.colorStopPresets.rainbow`.
+- Added settings-page guidance for sample meaning and color interpretation.
+- Added multiline localized slash-command help with an explicit `/footprint help` command.
+- Added per-key fallback from non-English locale tables to `enUS`.
+
+## [0.2.10] - 2026-11-21
+
+### Changed
+
+- Changed sampling to rasterize the line between consecutive same-map samples, so counts represent crossed cells rather than only time-sampled positions.
+- Reduced the sampling interval to 1 second while keeping stationary positions from adding counts.
+- Added a 40-cell-per-axis segment guard that records only the endpoint for likely teleports or loading-screen jumps.
+- New crossing-based counts are not directly comparable with counts recorded by older sampling versions; existing SavedVariables remain loadable without a schema migration.
+
+## [0.2.9] - 2026-11-21
+
+### Changed
+
+- Recalibrated the absolute logarithmic heatmap anchors to 1, 4, 16, 64, and 256 samples so low-count cells use the full color scale more effectively.
+- Lowered the per-cell rescale threshold from 1,000,000 to 65,535 so rescaling remains reachable and stored counts stay bounded sooner.
+- Kept the SavedVariables shape and schema unchanged; this only changes rendering thresholds and future rescale behavior.
+
 ## [0.2.8] - 2026-11-21
 
 ### Performance
 
-- Avoided re-normalizing every map cell when `Database:GetMap` returns a map during sampling.
-- Kept normalization during database initialization, preserving compatibility with existing SavedVariables and the current schema version.
+- Replaced one World Map frame per display cell with one full-canvas layer pin and a pooled texture renderer.
+- Stored runtime display cells as numeric counts and merged horizontally adjacent cells with the same 32-step color bucket into texture runs.
+- Applied heatmap opacity through the layer pin's alpha without rebuilding display runs or textures.
 
-## [0.2.7] - 2026-10-30
+## [0.2.7] - 2026-11-21
 
-### Changed
+### Performance
 
-- Increased the heatmap grid from 64 × 64 to 256 × 256, making each new cell one quarter the width and height of the previous cell.
-- Migrated existing 64 × 64 cell counts to the center of their corresponding 4 × 4 blocks without changing aggregate sample totals.
+- Replaced the global display-cache revision with per-source-map revisions, so unrelated map samples no longer rebuild an overlay.
+- Updated same-map display cells incrementally for ordinary samples and retained full rebuilds when a map is rescaled.
+- Cached related-map checks and validated affine map transforms, falling back to the existing per-cell API conversion when a transform is unavailable or inaccurate.
 
 ## [0.2.6] - 2026-10-20
 

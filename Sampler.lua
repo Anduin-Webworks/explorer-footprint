@@ -2,23 +2,11 @@ local _, ns = ...
 
 ns.Sampler = {
     running = false,
-    elapsed = 0,
+    ticker = nil,
     lastMapID = nil,
     lastX = nil,
     lastY = nil,
 }
-
-local function getXY(position)
-    if not position then
-        return nil
-    end
-
-    if position.GetXY then
-        return position:GetXY()
-    end
-
-    return position.x, position.y
-end
 
 local function getPosition()
     local mapID = C_Map.GetBestMapForUnit("player")
@@ -31,7 +19,7 @@ local function getPosition()
         return nil
     end
 
-    local x, y = getXY(position)
+    local x, y = ns.Utils.GetXY(position)
     if type(x) ~= "number" or type(y) ~= "number" then
         return nil
     end
@@ -58,18 +46,14 @@ function ns.Sampler:Sample()
         end
     end
 
-    local shouldRecord = self.lastMapID ~= mapID
-    if not shouldRecord and self.lastX and self.lastY then
-        local dx, dy = x - self.lastX, y - self.lastY
-        shouldRecord = (dx * dx + dy * dy) >= (ns.Config.movementThreshold * ns.Config.movementThreshold)
+    local recorded
+    if self.lastMapID == mapID and self.lastX ~= nil and self.lastY ~= nil then
+        recorded = ns.Aggregator:RecordSegment(mapID, self.lastX, self.lastY, x, y)
+    else
+        recorded = ns.Aggregator:Record(mapID, x, y)
     end
-
     self.lastMapID, self.lastX, self.lastY = mapID, x, y
-    if shouldRecord then
-        return ns.Aggregator:Record(mapID, x, y)
-    end
-
-    return false
+    return recorded or false
 end
 
 function ns.Sampler:Start()
@@ -78,21 +62,17 @@ function ns.Sampler:Start()
     end
 
     self.running = true
-    self.frame = CreateFrame("Frame")
-    self.frame:SetScript("OnUpdate", function(_, elapsed)
-        self.elapsed = self.elapsed + elapsed
-        if self.elapsed < ns.Config.samplingInterval then
-            return
+    self.ticker = C_Timer.NewTicker(ns.Config.samplingInterval, function()
+        if self.running then
+            self:Sample()
         end
-
-        self.elapsed = 0
-        self:Sample()
     end)
 end
 
 function ns.Sampler:Stop()
-    if self.frame then
-        self.frame:SetScript("OnUpdate", nil)
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
     end
     self.running = false
 end

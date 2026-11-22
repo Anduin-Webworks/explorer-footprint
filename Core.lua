@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 ns.ADDON_NAME = addonName
 ns.DISPLAY_NAME = "Explorer's Footprint"
-ns.VERSION = "0.2.8"
+ns.VERSION = "0.2.19"
 ns.initialized = false
 
 local eventFrame = CreateFrame("Frame")
@@ -22,7 +22,7 @@ function ns:Initialize()
     self.Options:Initialize()
     self.MapProvider:Register()
     self.Sampler:Start()
-    self.Debug:Initialize()
+    self.Commands:Initialize()
 
     self.initialized = true
 end

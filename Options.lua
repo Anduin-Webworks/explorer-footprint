@@ -7,7 +7,10 @@ function ns.Options:Initialize()
         return
     end
 
-    local category = Settings.RegisterVerticalLayoutCategory(ns.L.ADDON_TITLE)
+    local category, layout = Settings.RegisterVerticalLayoutCategory(ns.L.ADDON_TITLE)
+    if layout and layout.AddInitializer and CreateSettingsListSectionHeaderInitializer then
+        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(ns.L.SETTINGS_CATEGORY_DESCRIPTION))
+    end
     local variable = "ExplorerFootprint_ShowOverlay"
     local setting = Settings.RegisterAddOnSetting(
         category,
@@ -19,8 +22,7 @@ function ns.Options:Initialize()
         ns.Config.defaultShowOverlay
     )
 
-    setting:SetValueChangedCallback(function(_, value)
-        ns.DB.settings.showOverlay = value == true
+    setting:SetValueChangedCallback(function()
         ns.MapProvider:RequestRefresh(true)
     end)
 
@@ -39,12 +41,8 @@ function ns.Options:Initialize()
         ns.Config.defaultOverlayOpacity
     )
 
-    opacitySetting:SetValueChangedCallback(function(_, value)
-        ns.DB.settings.overlayOpacity = math.max(
-            0,
-            math.min(100, tonumber(value) or ns.Config.defaultOverlayOpacity)
-        )
-        ns.MapProvider:RequestRefresh(true)
+    opacitySetting:SetValueChangedCallback(function()
+        ns.MapProvider:SetOverlayOpacity()
     end)
 
     local opacityOptions = Settings.CreateSliderOptions(0, 100, 5)

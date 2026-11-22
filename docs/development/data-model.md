@@ -23,16 +23,20 @@ ExplorerFootprintDB = {
 }
 ```
 
-`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 256 × 256, configured in `Config.lua`. Each former 64 × 64 cell is migrated to the center of its corresponding 4 × 4 block, preserving the count without inventing a more precise historical position.
+`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. Persisted movement data uses a 256 × 256 grid configured in `Config.lua`; the renderer may aggregate it into smaller transient grids for smaller map types. `maxCount` is retained as a per-map diagnostic and rescale summary; it does not normalize the absolute color scale.
 
 ## Lifecycle
 
 1. WoW loads `ExplorerFootprintDB` before addon code.
-2. `Database:Initialize()` creates missing tables, validates and normalizes map records, applies defaults, and updates `schemaVersion`.
-3. `Aggregator:Record()` obtains the already-normalized map record and increments its cell and summary counters without scanning the rest of the map.
+2. `Database:Initialize()` creates missing tables, validates map records, applies defaults, and updates `schemaVersion`.
+3. `Aggregator:Record()` records an endpoint, while `Aggregator:RecordSegment()` rasterizes consecutive same-map movement and advances only that source map's runtime display revision once per segment.
 4. The database is written by WoW's normal SavedVariables lifecycle.
-5. When a cell reaches the configured ceiling, counts for that map are halved and zero cells are removed.
+5. When a cell reaches the configured ceiling of `65,535`, counts for that map are halved and zero cells are removed.
 6. `/footprint reset` replaces the maps table after confirmation.
+
+Display caches are runtime-only. Each target-map cache tracks the revisions of the related source maps that contributed cells to it and stores `cells[cellIndex] = count`; coordinates are derived from the index when rendered. A normal sample recorded on the displayed source map updates its cached cell directly; map rescaling, cross-map changes, or a newly related source map cause the target cache to rebuild. The renderer quantizes counts into a 32-step lookup table and merges adjacent same-color cells into pooled texture runs on one full-canvas pin. Existing SavedVariables do not contain these revisions, caches, or runs.
+
+The current sampling model counts rasterized crossed cells, not raw time-sample events. Same-cell samples are ignored, and segments longer than 40 cells on either axis record only their endpoint. Existing data remains loadable, but old time-sampled counts and new crossing-based counts should not be compared directly.
 
 ## Hierarchical rendering
 
@@ -52,4 +56,4 @@ This means a sample recorded in a zone can appear on its continent map, and an e
 
 Migrations are monotonic and must preserve existing data whenever possible. A future schema change belongs in `Database.lua`, with a new changelog entry and a focused migration test or in-game verification case.
 
-Schema version `3` migrates the original 64 × 64 cell indexes to the current 256 × 256 grid. Migration is performed once during database initialization and preserves each map's aggregate sample count.
+Schema version `3` migrates original 64 × 64 cell indexes into the current 256 × 256 grid. Each old count is distributed across the center 2 × 2 cells of its corresponding 4 × 4 block, with integer remainders assigned deterministically so aggregate counts are preserved. Before replacing `maps`, the migration stores the original table in `backup_v2`; `/footprint reset` clears both the active maps and that backup. The backup is intentionally temporary and should be retired by a later schema migration after the upgrade has had time to settle.

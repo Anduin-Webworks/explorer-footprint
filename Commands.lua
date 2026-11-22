@@ -1,6 +1,6 @@
 local _, ns = ...
 
-ns.Debug = {}
+ns.Commands = {}
 
 local function printStatus()
     local mapCount, cellCount, sampleCount = ns.Database:GetTotals()
@@ -10,6 +10,16 @@ local function printStatus()
     end
 
     print(ns.L.STATUS_FORMAT:format(mapCount, cellCount, sampleCount))
+end
+
+local function printHelp()
+    print(ns.L.SLASH_HELP_HEADER)
+    print(ns.L.SLASH_HELP_OPEN)
+    print(ns.L.SLASH_HELP_HELP)
+    print(ns.L.SLASH_HELP_TOGGLE)
+    print(ns.L.SLASH_HELP_STATUS)
+    print(ns.L.SLASH_HELP_DEBUG)
+    print(ns.L.SLASH_HELP_RESET)
 end
 
 local function showResetDialog()
@@ -45,18 +55,6 @@ local function printParentChain(mapID)
     return table.concat(chain, " -> ")
 end
 
-local function getXY(position)
-    if not position then
-        return nil
-    end
-
-    if position.GetXY then
-        return position:GetXY()
-    end
-
-    return position.x, position.y
-end
-
 local function printMapDiagnostics()
     local map = ns.MapProvider:GetMap()
     local targetMapID = map and map:GetMapID()
@@ -71,7 +69,7 @@ local function printMapDiagnostics()
 
     local playerMapID = C_Map.GetBestMapForUnit("player")
     local position = playerMapID and C_Map.GetPlayerMapPosition(playerMapID, "player")
-    local x, y = getXY(position)
+    local x, y = ns.Utils.GetXY(position)
     local positionText = x and y and (" (x=%.4f, y=%.4f)"):format(x, y) or (" (" .. ns.L.DEBUG_MAP_NO_POSITION .. ")")
     print(ns.L.DEBUG_MAP_PLAYER:format(formatMap(playerMapID), positionText))
 
@@ -100,6 +98,32 @@ local function printMapDiagnostics()
         ))
     end
 
+    -- A slash-command diagnostic should describe the current renderer, not
+    -- whatever state happened to be left by the last map-canvas refresh.
+    ns.MapProvider:RefreshAllData()
+    local renderState = ns.MapProvider.lastRenderState or {
+        reason = ns.L.DEBUG_MAP_RENDER_NOT_REFRESHED,
+        cellCount = 0,
+        positiveCellCount = 0,
+        bucketedCellCount = 0,
+        runCount = 0,
+        pin = false,
+        firstRawType = "none",
+        firstRawValue = "none",
+    }
+    print(ns.L.DEBUG_MAP_RENDER:format(
+        renderState.reason,
+        renderState.gridWidth or ns.Config.gridWidth,
+        renderState.gridHeight or ns.Config.gridHeight,
+        renderState.cellCount or 0,
+        renderState.positiveCellCount or 0,
+        renderState.bucketedCellCount or 0,
+        renderState.runCount or 0,
+        renderState.pin and "yes" or "no",
+        renderState.firstRawType or "none",
+        renderState.firstRawValue or "none"
+    ))
+
     local bounds = ns.L.DEBUG_MAP_NONE
     if diagnostics.minX then
         bounds = ("x=%.4f..%.4f, y=%.4f..%.4f"):format(
@@ -116,7 +140,7 @@ local function printMapDiagnostics()
     ))
 end
 
-function ns.Debug:Initialize()
+function ns.Commands:Initialize()
     if self.initialized then
         return
     end
@@ -150,10 +174,12 @@ function ns.Debug:Initialize()
             printMapDiagnostics()
         elseif command == "reset" then
             showResetDialog()
+        elseif command == "help" then
+            printHelp()
         elseif command == "" then
             ns.Options:Open()
         else
-            print(ns.L.SLASH_HELP)
+            printHelp()
         end
     end
 

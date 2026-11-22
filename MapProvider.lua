@@ -2,25 +2,14 @@ local _, ns = ...
 
 ns.MapProvider = CreateFromMixins(MapCanvasDataProviderMixin)
 
+-- The template now represents one full-canvas heatmap layer rather than an
+-- individual cell pin.
 local PIN_TEMPLATE = "ExplorerFootprintHeatmapPinTemplate"
 
-local function getIntensity(count)
-    local minimumCount = ns.Config.intensityMinCount
-    local maximumCount = ns.Config.intensityMaxCount
-    if count <= minimumCount then
-        return 0
-    elseif count >= maximumCount then
-        return 1
-    end
-
-    local minimumLog = math.log(minimumCount)
-    local maximumLog = math.log(maximumCount)
-    local logRange = maximumLog - minimumLog
-    if logRange <= 0 then
-        return 0
-    end
-
-    return (math.log(count) - minimumLog) / logRange
+local function getOverlayOpacity()
+    local value = ns.DB and ns.DB.settings and ns.DB.settings.overlayOpacity
+        or ns.Config.defaultOverlayOpacity
+    return math.max(0, math.min(100, tonumber(value) or ns.Config.defaultOverlayOpacity)) / 100
 end
 
 function ns.MapProvider:OnAdded(mapCanvas)
@@ -34,6 +23,8 @@ function ns.MapProvider:OnRemoved(mapCanvas)
     if mapCanvas.UnregisterDataProviderOnUpdate then
         mapCanvas:UnregisterDataProviderOnUpdate(self)
     end
+    self.layerPin = nil
+    self.lastRenderState = nil
     MapCanvasDataProviderMixin.OnRemoved(self, mapCanvas)
 end
 
@@ -85,76 +76,112 @@ end
 
 function ns.MapProvider:OnMapChanged()
     -- SetMapID signals OnMapChanged but does not guarantee a provider refresh.
-    -- Rebuild only our pins for the newly selected map.
+    -- Rebuild only our single layer pin for the newly selected map.
     self:RefreshAllData()
     self.dirty = false
     self.lastRefresh = GetTime()
 end
 
+function ns.MapProvider:RemoveAllData()
+    local map = self:GetMap()
+    if map then
+        map:RemoveAllPinsByTemplate(PIN_TEMPLATE)
+    end
+    self.layerPin = nil
+end
+
+function ns.MapProvider:SetOverlayOpacity()
+    if self.layerPin then
+        self.layerPin:SetAlpha(getOverlayOpacity())
+    end
+end
+
 function ns.MapProvider:RefreshAllData()
     local map = self:GetMap()
     if not map then
+        self.lastRenderState = {
+            reason = "no-map",
+            cellCount = 0,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
-    map:RemoveAllPinsByTemplate(PIN_TEMPLATE)
+    self:RemoveAllData()
     if not ns.DB or not ns.DB.settings.showOverlay then
+        self.lastRenderState = {
+            reason = "hidden",
+            mapID = map:GetMapID(),
+            cellCount = 0,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
     local mapID = map:GetMapID()
-    local cells = ns.MapProjection:BuildDisplayCells(mapID)
+    local cells, _, displayCache, gridWidth, gridHeight = ns.MapProjection:BuildRenderCells(mapID)
+    local cellCount = 0
+    for _ in pairs(cells) do
+        cellCount = cellCount + 1
+    end
     if not next(cells) then
+        self.lastRenderState = {
+            reason = "no-cells",
+            mapID = mapID,
+            cellCount = cellCount,
+            gridWidth = gridWidth,
+            gridHeight = gridHeight,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
-    local width, height = ns.Config.gridWidth, ns.Config.gridHeight
-    local opacity = math.max(
-        0,
-        math.min(100, tonumber(ns.DB.settings.overlayOpacity) or ns.Config.defaultOverlayOpacity)
-    ) / 100
-
-    local function getColor(intensity)
-        local stops = ns.Config.colorStops
-        for index = 1, #stops - 1 do
-            local first, second = stops[index], stops[index + 1]
-            if intensity <= second.position then
-                local range = second.position - first.position
-                local localIntensity = range > 0 and (intensity - first.position) / range or 0
-                return
-                    first.color[1] + (second.color[1] - first.color[1]) * localIntensity,
-                    first.color[2] + (second.color[2] - first.color[2]) * localIntensity,
-                    first.color[3] + (second.color[3] - first.color[3]) * localIntensity
-            end
-        end
-
-        local last = stops[#stops].color
-        return last[1], last[2], last[3]
+    local runs = displayCache.renderRuns
+    local buildState = displayCache.renderBuildState
+    if not runs then
+        runs = ns.HeatmapRenderer:BuildRuns(cells, gridWidth, gridHeight)
+        displayCache.renderRuns = runs
+        buildState = ns.HeatmapRenderer.lastBuildState or {}
+        displayCache.renderBuildState = buildState
+    end
+    buildState = buildState or {}
+    if #runs == 0 then
+        self.lastRenderState = {
+            reason = "no-runs",
+            mapID = mapID,
+            cellCount = cellCount,
+            gridWidth = gridWidth,
+            gridHeight = gridHeight,
+            positiveCellCount = buildState.positiveCellCount or 0,
+            bucketedCellCount = buildState.bucketedCellCount or 0,
+            firstRawType = buildState.firstRawType or "none",
+            firstRawValue = buildState.firstRawValue or "none",
+            runCount = 0,
+            pin = false,
+        }
+        return
     end
 
-    for _, cellData in pairs(cells) do
-        local count = cellData.count
-        if count > 0 then
-            -- Use an absolute logarithmic scale so a cell's color represents
-            -- its accumulated sample count rather than the current map's
-            -- most visited cell.
-            local intensity = getIntensity(count)
-            if intensity >= ns.Config.minVisibleIntensity then
-                local red, green, blue = getColor(intensity)
-                local alpha = (ns.Config.minAlpha + (ns.Config.maxAlpha - ns.Config.minAlpha) * intensity) * opacity
-
-                map:AcquirePin(PIN_TEMPLATE, {
-                    x = cellData.x,
-                    y = cellData.y,
-                    width = 1 / width,
-                    height = 1 / height,
-                    red = red,
-                    green = green,
-                    blue = blue,
-                    alpha = alpha,
-                    count = count,
-                })
-            end
-        end
-    end
+    self.layerPin = map:AcquirePin(PIN_TEMPLATE, {
+        runs = runs,
+        gridWidth = gridWidth,
+        gridHeight = gridHeight,
+        opacity = getOverlayOpacity(),
+    })
+    self.lastRenderState = {
+        reason = "pin-acquired",
+        mapID = mapID,
+        cellCount = cellCount,
+        gridWidth = gridWidth,
+        gridHeight = gridHeight,
+        positiveCellCount = buildState.positiveCellCount or 0,
+        bucketedCellCount = buildState.bucketedCellCount or 0,
+        firstRawType = buildState.firstRawType or "none",
+        firstRawValue = buildState.firstRawValue or "none",
+        runCount = #runs,
+        pin = self.layerPin ~= nil,
+    }
 end
