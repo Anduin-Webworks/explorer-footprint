@@ -4,6 +4,46 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.19] - 2026-11-21
+
+### Fixed
+
+- Corrected the pooled renderer's `BuildRuns` method binding so numeric display-cell counts are passed to the run builder instead of the renderer table.
+
+## [0.2.18] - 2026-11-21
+
+### Fixed
+
+- Always report renderer state in `/footprint debug map`, including when the provider has not refreshed since login.
+- Refresh the provider before printing renderer diagnostics so the command is self-contained.
+- Preserve renderer counters with cached texture runs and clear them when a display cache is incrementally invalidated.
+
+## [0.2.17] - 2026-11-21
+
+### Changed
+
+- Extended renderer diagnostics with the first display-cell value type and fields to identify mixed-version runtime data safely.
+
+## [0.2.16] - 2026-11-21
+
+### Fixed
+
+- Made heatmap run generation explicitly accept bucket `0` and tolerate legacy runtime display-cell records while transitioning to numeric counts.
+- Extended renderer diagnostics with positive-cell and bucketed-cell counts.
+
+## [0.2.15] - 2026-11-21
+
+### Added
+
+- Added renderer state to `/footprint debug map`, including display-cell count, texture-run count, and pin-acquisition status, without persisting diagnostic data.
+
+## [0.2.14] - 2026-11-21
+
+### Fixed
+
+- Anchored the pooled heatmap pin directly to Blizzard's map canvas so recorded cells remain visible on the selected map during pan and zoom.
+- Updated the Retail interface metadata to include `120107`.
+
 ## [0.2.13] - 2026-11-21
 
 ### Changed

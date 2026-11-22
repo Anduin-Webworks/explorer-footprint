@@ -98,6 +98,30 @@ local function printMapDiagnostics()
         ))
     end
 
+    -- A slash-command diagnostic should describe the current renderer, not
+    -- whatever state happened to be left by the last map-canvas refresh.
+    ns.MapProvider:RefreshAllData()
+    local renderState = ns.MapProvider.lastRenderState or {
+        reason = ns.L.DEBUG_MAP_RENDER_NOT_REFRESHED,
+        cellCount = 0,
+        positiveCellCount = 0,
+        bucketedCellCount = 0,
+        runCount = 0,
+        pin = false,
+        firstRawType = "none",
+        firstRawValue = "none",
+    }
+    print(ns.L.DEBUG_MAP_RENDER:format(
+        renderState.reason,
+        renderState.cellCount or 0,
+        renderState.positiveCellCount or 0,
+        renderState.bucketedCellCount or 0,
+        renderState.runCount or 0,
+        renderState.pin and "yes" or "no",
+        renderState.firstRawType or "none",
+        renderState.firstRawValue or "none"
+    ))
+
     local bounds = ns.L.DEBUG_MAP_NONE
     if diagnostics.minX then
         bounds = ("x=%.4f..%.4f, y=%.4f..%.4f"):format(

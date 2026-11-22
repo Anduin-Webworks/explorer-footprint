@@ -324,6 +324,7 @@ function ns.MapProjection:IncrementSourceCells(sourceMapID, cellDeltas, revision
         end
     end
     cached.runs = nil
+    cached.buildState = nil
     cached.sourceRevisions[sourceMapID] = revision
     return true
 end

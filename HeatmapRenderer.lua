@@ -64,6 +64,13 @@ end
 local COLOR_LUT = buildColorLUT()
 local BUCKET_THRESHOLDS = buildBucketThresholds()
 
+local function getCellCount(rawCount)
+    if type(rawCount) == "table" then
+        return tonumber(rawCount.count) or 0
+    end
+    return tonumber(rawCount) or 0
+end
+
 local function getColorBucket(count)
     if count <= ns.Config.intensityMinCount then
         return 0
@@ -89,12 +96,33 @@ end
 local function buildRuns(cells)
     local width = ns.Config.gridWidth
     local rows = {}
+    local positiveCellCount = 0
+    local bucketedCellCount = 0
+    local firstRawType
+    local firstRawValue
 
     for cellIndex, rawCount in pairs(cells) do
-        local count = tonumber(rawCount) or 0
+        if not firstRawType then
+            firstRawType = type(rawCount)
+            if firstRawType == "table" then
+                local fields = {}
+                for key, value in pairs(rawCount) do
+                    fields[#fields + 1] = tostring(key) .. "=" .. tostring(value)
+                    if #fields >= 3 then
+                        break
+                    end
+                end
+                firstRawValue = table.concat(fields, ",")
+            else
+                firstRawValue = tostring(rawCount)
+            end
+        end
+        local count = getCellCount(rawCount)
         if count > 0 then
+            positiveCellCount = positiveCellCount + 1
             local bucket = getColorBucket(count)
-            if bucket then
+            if bucket ~= nil then
+                bucketedCellCount = bucketedCellCount + 1
                 local row = math.floor(cellIndex / width)
                 local column = cellIndex - (row * width)
                 local rowBuckets = rows[row]
@@ -112,7 +140,7 @@ local function buildRuns(cells)
         local column = 0
         while column < width do
             local bucket = rowBuckets[column]
-            if bucket then
+            if bucket ~= nil then
                 local startColumn = column
                 repeat
                     column = column + 1
@@ -128,6 +156,16 @@ local function buildRuns(cells)
                 column = column + 1
             end
         end
+    end
+
+    if ns.HeatmapRenderer then
+        ns.HeatmapRenderer.lastBuildState = {
+            positiveCellCount = positiveCellCount,
+            bucketedCellCount = bucketedCellCount,
+            runCount = #runs,
+            firstRawType = firstRawType or "none",
+            firstRawValue = firstRawValue or "none",
+        }
     end
 
     return runs
@@ -165,10 +203,19 @@ function ExplorerFootprintMapPinMixin:Layout()
         return
     end
 
-    local canvasWidth = math.max(1, map:DenormalizeHorizontalSize(1))
-    local canvasHeight = math.max(1, map:DenormalizeVerticalSize(1))
-    self:SetSize(canvasWidth, canvasHeight)
-    self:SetPosition(0.5, 0.5)
+    local canvas = map.GetCanvas and map:GetCanvas()
+    if not canvas then
+        return
+    end
+
+    -- This pin is a full-canvas layer, so anchor it directly to the map
+    -- canvas. That avoids relying on normalized pin sizing/positioning and
+    -- keeps the texture layer aligned during map pan and zoom.
+    self:ClearAllPoints()
+    self:SetAllPoints(canvas)
+    local canvasWidth, canvasHeight = canvas:GetSize()
+    canvasWidth = math.max(1, canvasWidth)
+    canvasHeight = math.max(1, canvasHeight)
 
     self.pool:ReleaseAll()
     local cellWidth = canvasWidth / ns.Config.gridWidth
@@ -200,8 +247,11 @@ function ExplorerFootprintMapPinMixin:OnCanvasScaleChanged()
 end
 
 ns.HeatmapRenderer = {
-    BuildRuns = buildRuns,
 }
+
+function ns.HeatmapRenderer:BuildRuns(cells)
+    return buildRuns(cells)
+end
 
 function ns.HeatmapRenderer:Refresh()
     if ns.MapProvider then

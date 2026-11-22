@@ -24,6 +24,7 @@ function ns.MapProvider:OnRemoved(mapCanvas)
         mapCanvas:UnregisterDataProviderOnUpdate(self)
     end
     self.layerPin = nil
+    self.lastRenderState = nil
     MapCanvasDataProviderMixin.OnRemoved(self, mapCanvas)
 end
 
@@ -98,26 +99,65 @@ end
 function ns.MapProvider:RefreshAllData()
     local map = self:GetMap()
     if not map then
+        self.lastRenderState = {
+            reason = "no-map",
+            cellCount = 0,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
     self:RemoveAllData()
     if not ns.DB or not ns.DB.settings.showOverlay then
+        self.lastRenderState = {
+            reason = "hidden",
+            mapID = map:GetMapID(),
+            cellCount = 0,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
     local mapID = map:GetMapID()
     local cells, _, displayCache = ns.MapProjection:BuildDisplayCells(mapID)
+    local cellCount = 0
+    for _ in pairs(cells) do
+        cellCount = cellCount + 1
+    end
     if not next(cells) then
+        self.lastRenderState = {
+            reason = "no-cells",
+            mapID = mapID,
+            cellCount = cellCount,
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
     local runs = displayCache.runs
+    local buildState = displayCache.buildState
     if not runs then
         runs = ns.HeatmapRenderer:BuildRuns(cells)
         displayCache.runs = runs
+        buildState = ns.HeatmapRenderer.lastBuildState or {}
+        displayCache.buildState = buildState
     end
+    buildState = buildState or {}
     if #runs == 0 then
+        self.lastRenderState = {
+            reason = "no-runs",
+            mapID = mapID,
+            cellCount = cellCount,
+            positiveCellCount = buildState.positiveCellCount or 0,
+            bucketedCellCount = buildState.bucketedCellCount or 0,
+            firstRawType = buildState.firstRawType or "none",
+            firstRawValue = buildState.firstRawValue or "none",
+            runCount = 0,
+            pin = false,
+        }
         return
     end
 
@@ -125,4 +165,15 @@ function ns.MapProvider:RefreshAllData()
         runs = runs,
         opacity = getOverlayOpacity(),
     })
+    self.lastRenderState = {
+        reason = "pin-acquired",
+        mapID = mapID,
+        cellCount = cellCount,
+        positiveCellCount = buildState.positiveCellCount or 0,
+        bucketedCellCount = buildState.bucketedCellCount or 0,
+        firstRawType = buildState.firstRawType or "none",
+        firstRawValue = buildState.firstRawValue or "none",
+        runCount = #runs,
+        pin = self.layerPin ~= nil,
+    }
 end

@@ -18,7 +18,7 @@ Sampling and renderer values are currently developer configuration in `Config.lu
 | `/footprint help` | Prints the available slash commands. |
 | `/footprint toggle` | Toggles the heatmap display. |
 | `/footprint status` | Prints map, non-zero-cell, and aggregate sample totals. |
-| `/footprint debug map` | Prints current map IDs, parent chain, source-map projection results, and rendered coordinate bounds. |
+| `/footprint debug map` | Refreshes the provider, then prints current map IDs, parent chain, source-map projection results, renderer state, and rendered coordinate bounds. The renderer should report numeric raw display-cell data and one or more texture runs when cells are present. |
 | `/footprint reset` | Opens a confirmation dialog, then clears all map data. |
 
 ## Retail API boundary
