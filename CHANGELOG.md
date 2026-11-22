@@ -4,6 +4,12 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.22] - 2026-11-22
+
+### Fixed
+
+- Explicitly apply the heatmap pin's `PIN_FRAME_LEVEL_AREA_POI` level because the full-canvas pin does not use Blizzard's normalized `SetPosition()` path; zone detail layers can no longer cover the rendered cells.
+
 ## [0.2.21] - 2026-11-21
 
 ### Changed

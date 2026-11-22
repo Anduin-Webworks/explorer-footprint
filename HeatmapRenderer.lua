@@ -194,6 +194,10 @@ end
 
 function ExplorerFootprintMapPinMixin:OnAcquired(data)
     self:EnsurePool()
+    -- Full-canvas pins intentionally do not call SetPosition(), which is the
+    -- normal MapCanvas path that applies the requested pin frame level. Apply
+    -- it explicitly so zone detail layers cannot cover the heatmap.
+    self:ApplyFrameLevel()
     self.runs = data and data.runs or {}
     self.gridWidth = data and data.gridWidth or ns.Config.gridWidth
     self.gridHeight = data and data.gridHeight or ns.Config.gridHeight
