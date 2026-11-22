@@ -2,5 +2,8 @@
     <!-- One full-canvas layer pin; HeatmapRenderer.lua pools its run textures. -->
     <Frame name="ExplorerFootprintHeatmapPinTemplate" virtual="true" mixin="ExplorerFootprintMapPinMixin">
         <Size x="1" y="1" />
+        <Scripts>
+            <OnLoad method="OnLoad" />
+        </Scripts>
     </Frame>
 </Ui>

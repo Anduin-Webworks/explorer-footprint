@@ -4,6 +4,13 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.20] - 2026-11-21
+
+### Fixed
+
+- Explicitly invoke the heatmap pin mixin's `OnLoad` handler from the XML template so its texture pool is initialized before World Map refresh.
+- Keep pool creation and release defensive for pin lifecycle callbacks that occur before or without the template load hook.
+
 ## [0.2.19] - 2026-11-21
 
 ### Fixed

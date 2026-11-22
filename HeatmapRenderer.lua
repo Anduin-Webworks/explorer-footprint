@@ -175,29 +175,39 @@ end
 -- provider acquires its first pin.
 ExplorerFootprintMapPinMixin = CreateFromMixins(MapCanvasPinMixin)
 
+function ExplorerFootprintMapPinMixin:EnsurePool()
+    if not self.pool then
+        self.pool = CreateTexturePool(self, "ARTWORK", nil, nil, resetTexture)
+    end
+end
+
 function ExplorerFootprintMapPinMixin:OnLoad()
     -- Jade Forest and other zone maps can have detail layers above the
     -- default pin frame level. Use Blizzard's registered area-POI level so
     -- the heatmap remains visible across the complete map canvas.
     self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI")
 
-    self.pool = CreateTexturePool(self, "ARTWORK", nil, nil, resetTexture)
+    self:EnsurePool()
     self:EnableMouse(false)
 end
 
 function ExplorerFootprintMapPinMixin:OnAcquired(data)
+    self:EnsurePool()
     self.runs = data and data.runs or {}
     self:SetAlpha(data and data.opacity or 1)
     self:Layout()
 end
 
 function ExplorerFootprintMapPinMixin:OnReleased()
-    self.pool:ReleaseAll()
+    if self.pool then
+        self.pool:ReleaseAll()
+    end
     self.runs = nil
     self:SetAlpha(0)
 end
 
 function ExplorerFootprintMapPinMixin:Layout()
+    self:EnsurePool()
     local map = self:GetMap()
     if not map then
         return
