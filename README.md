@@ -4,7 +4,7 @@ Explorer's Footprint is a World of Warcraft Retail addon that records outdoor pl
 
 ## Status
 
-Version `0.2.9` recalibrates the absolute logarithmic heatmap anchors to 1, 4, 16, 64, and 256 samples and lowers the per-cell rescale threshold to 65,535. It preserves the existing heatmap data format, pooled full-canvas renderer, per-map cache revisions, incremental same-map updates, and validated map projections. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
+Version `0.2.10` rasterizes movement between consecutive same-map samples, so cells count crossed path segments instead of depending only on sampling frequency. It samples every second, ignores stationary positions, and treats jumps over 40 cells per axis as endpoint-only teleports. Existing SavedVariables remain loadable, but crossing-based counts are not directly comparable with older time-sampled counts. It preserves the 0.2.9 heatmap scale, rescale ceiling, pooled renderer, per-map cache revisions, and validated map projections. It is usable as a development build, but in-game validation against the target Retail client is still required before a public release.
 
 ## Features
 

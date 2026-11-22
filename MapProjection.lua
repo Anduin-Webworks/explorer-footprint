@@ -310,20 +310,26 @@ function ns.MapProjection:IsDisplayCacheCurrent(targetMapID, cached)
     return true
 end
 
-function ns.MapProjection:IncrementSourceCell(sourceMapID, cellIndex, delta, revision)
+function ns.MapProjection:IncrementSourceCells(sourceMapID, cellDeltas, revision)
     local cached = self.displayCache[sourceMapID]
     if not cached or not self:IsDisplayCacheCurrent(sourceMapID, cached) then
         return false
     end
 
-    local count = (tonumber(cached.cells[cellIndex]) or 0) + delta
-    cached.cells[cellIndex] = count
-    if count > cached.maxCount then
-        cached.maxCount = count
+    for cellIndex, delta in pairs(cellDeltas) do
+        local count = (tonumber(cached.cells[cellIndex]) or 0) + delta
+        cached.cells[cellIndex] = count
+        if count > cached.maxCount then
+            cached.maxCount = count
+        end
     end
     cached.runs = nil
     cached.sourceRevisions[sourceMapID] = revision
     return true
+end
+
+function ns.MapProjection:IncrementSourceCell(sourceMapID, cellIndex, delta, revision)
+    return self:IncrementSourceCells(sourceMapID, { [cellIndex] = delta }, revision)
 end
 
 function ns.MapProjection:ClearDisplayCache()

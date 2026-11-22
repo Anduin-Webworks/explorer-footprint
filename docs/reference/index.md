@@ -7,7 +7,7 @@
 | Show heatmap overlay | Boolean | `true` | `ExplorerFootprintDB.settings.showOverlay` | Shows or hides the owned World Map heatmap layer. |
 | Heatmap opacity | Number (0–100) | `55` | `ExplorerFootprintDB.settings.overlayOpacity` | Controls the strength of the rectangle-cell overlay over the World Map. |
 
-Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings. The current absolute logarithmic anchors are 1, 4, 16, 64, and 256 samples; the per-cell rescale ceiling is 65,535.
+Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings. Sampling runs every 1 second, the maximum segment distance is 40 cells per axis, the current absolute logarithmic anchors are 1, 4, 16, 64, and 256 samples, and the per-cell rescale ceiling is 65,535.
 
 ## Slash commands
 

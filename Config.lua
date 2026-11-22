@@ -3,8 +3,8 @@ local _, ns = ...
 ns.Config = {
     schemaVersion = 2,
 
-    samplingInterval = 2.0,
-    movementThreshold = 0.002,
+    samplingInterval = 1.0,
+    maxSegmentCells = 40,
 
     gridWidth = 64,
     gridHeight = 64,

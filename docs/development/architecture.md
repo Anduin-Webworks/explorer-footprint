@@ -8,8 +8,8 @@
 | `Config.lua` | Central defaults for sampling, grid, rendering, and persistence limits. |
 | `Localization.lua` | English strings with a locale lookup ready for additional locale files. |
 | `Database.lua` | Initializes, validates, migrates, resets, and summarizes `ExplorerFootprintDB`. |
-| `Sampler.lua` | Throttles map-position reads and filters stationary samples. |
-| `Aggregator.lua` | Converts normalized coordinates to sparse grid-cell counts. |
+| `Sampler.lua` | Samples map positions, preserves consecutive endpoints, and ignores stationary samples. |
+| `Aggregator.lua` | Converts normalized positions into same-map Bresenham segments and sparse crossed-cell counts. |
 | `MapProjection.lua` | Relates source and target map IDs, converts positions through world coordinates, and builds temporary target-map cells. |
 | `MapProvider.lua` | Registers a `MapCanvasDataProviderMixin` provider and manages one full-canvas heatmap layer pin. |
 | `HeatmapRenderer.lua` | Builds quantized color runs, owns the pooled texture layer pin, and provides the visual refresh facade. |

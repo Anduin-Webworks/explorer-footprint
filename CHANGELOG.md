@@ -4,6 +4,15 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.10] - 2026-11-21
+
+### Changed
+
+- Changed sampling to rasterize the line between consecutive same-map samples, so counts represent crossed cells rather than only time-sampled positions.
+- Reduced the sampling interval to 1 second while keeping stationary positions from adding counts.
+- Added a 40-cell-per-axis segment guard that records only the endpoint for likely teleports or loading-screen jumps.
+- New crossing-based counts are not directly comparable with counts recorded by older sampling versions; existing SavedVariables remain loadable without a schema migration.
+
 ## [0.2.9] - 2026-11-21
 
 ### Changed

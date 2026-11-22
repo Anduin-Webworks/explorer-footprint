@@ -29,12 +29,14 @@ ExplorerFootprintDB = {
 
 1. WoW loads `ExplorerFootprintDB` before addon code.
 2. `Database:Initialize()` creates missing tables, validates map records, applies defaults, and updates `schemaVersion`.
-3. `Aggregator:Record()` increments a map's cell and summary counters, then advances only that source map's runtime display revision.
+3. `Aggregator:Record()` records an endpoint, while `Aggregator:RecordSegment()` rasterizes consecutive same-map movement and advances only that source map's runtime display revision once per segment.
 4. The database is written by WoW's normal SavedVariables lifecycle.
 5. When a cell reaches the configured ceiling of `65,535`, counts for that map are halved and zero cells are removed.
 6. `/footprint reset` replaces the maps table after confirmation.
 
 Display caches are runtime-only. Each target-map cache tracks the revisions of the related source maps that contributed cells to it and stores `cells[cellIndex] = count`; coordinates are derived from the index when rendered. A normal sample recorded on the displayed source map updates its cached cell directly; map rescaling, cross-map changes, or a newly related source map cause the target cache to rebuild. The renderer quantizes counts into a 32-step lookup table and merges adjacent same-color cells into pooled texture runs on one full-canvas pin. Existing SavedVariables do not contain these revisions, caches, or runs.
+
+The current sampling model counts rasterized crossed cells, not raw time-sample events. Same-cell samples are ignored, and segments longer than 40 cells on either axis record only their endpoint. Existing data remains loadable, but old time-sampled counts and new crossing-based counts should not be compared directly.
 
 ## Hierarchical rendering
 

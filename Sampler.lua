@@ -58,18 +58,14 @@ function ns.Sampler:Sample()
         end
     end
 
-    local shouldRecord = self.lastMapID ~= mapID
-    if not shouldRecord and self.lastX and self.lastY then
-        local dx, dy = x - self.lastX, y - self.lastY
-        shouldRecord = (dx * dx + dy * dy) >= (ns.Config.movementThreshold * ns.Config.movementThreshold)
+    local recorded
+    if self.lastMapID == mapID and self.lastX ~= nil and self.lastY ~= nil then
+        recorded = ns.Aggregator:RecordSegment(mapID, self.lastX, self.lastY, x, y)
+    else
+        recorded = ns.Aggregator:Record(mapID, x, y)
     end
-
     self.lastMapID, self.lastX, self.lastY = mapID, x, y
-    if shouldRecord then
-        return ns.Aggregator:Record(mapID, x, y)
-    end
-
-    return false
+    return recorded or false
 end
 
 function ns.Sampler:Start()
