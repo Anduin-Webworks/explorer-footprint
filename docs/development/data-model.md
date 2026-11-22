@@ -6,7 +6,7 @@
 
 ```lua
 ExplorerFootprintDB = {
-    schemaVersion = 2,
+    schemaVersion = 3,
     settings = {
         showOverlay = true,
         overlayOpacity = 55,
@@ -23,7 +23,7 @@ ExplorerFootprintDB = {
 }
 ```
 
-`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 64 × 64, configured in `Config.lua`.
+`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 256 × 256, configured in `Config.lua`. `maxCount` is retained as a per-map diagnostic and rescale summary; it does not normalize the absolute color scale.
 
 ## Lifecycle
 
@@ -56,4 +56,4 @@ This means a sample recorded in a zone can appear on its continent map, and an e
 
 Migrations are monotonic and must preserve existing data whenever possible. A future schema change belongs in `Database.lua`, with a new changelog entry and a focused migration test or in-game verification case.
 
-The current repository contains only schema version `1`; later migrations are **Not applicable yet**.
+Schema version `3` migrates original 64 × 64 cell indexes into the current 256 × 256 grid. Each old count is distributed across the center 2 × 2 cells of its corresponding 4 × 4 block, with integer remainders assigned deterministically so aggregate counts are preserved. Before replacing `maps`, the migration stores the original table in `backup_v2`; `/footprint reset` clears both the active maps and that backup. The backup is intentionally temporary and should be retired by a later schema migration after the upgrade has had time to settle.

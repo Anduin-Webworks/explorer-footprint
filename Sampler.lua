@@ -2,23 +2,11 @@ local _, ns = ...
 
 ns.Sampler = {
     running = false,
-    elapsed = 0,
+    ticker = nil,
     lastMapID = nil,
     lastX = nil,
     lastY = nil,
 }
-
-local function getXY(position)
-    if not position then
-        return nil
-    end
-
-    if position.GetXY then
-        return position:GetXY()
-    end
-
-    return position.x, position.y
-end
 
 local function getPosition()
     local mapID = C_Map.GetBestMapForUnit("player")
@@ -31,7 +19,7 @@ local function getPosition()
         return nil
     end
 
-    local x, y = getXY(position)
+    local x, y = ns.Utils.GetXY(position)
     if type(x) ~= "number" or type(y) ~= "number" then
         return nil
     end
@@ -74,21 +62,17 @@ function ns.Sampler:Start()
     end
 
     self.running = true
-    self.frame = CreateFrame("Frame")
-    self.frame:SetScript("OnUpdate", function(_, elapsed)
-        self.elapsed = self.elapsed + elapsed
-        if self.elapsed < ns.Config.samplingInterval then
-            return
+    self.ticker = C_Timer.NewTicker(ns.Config.samplingInterval, function()
+        if self.running then
+            self:Sample()
         end
-
-        self.elapsed = 0
-        self:Sample()
     end)
 end
 
 function ns.Sampler:Stop()
-    if self.frame then
-        self.frame:SetScript("OnUpdate", nil)
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
     end
     self.running = false
 end

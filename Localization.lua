@@ -6,9 +6,15 @@ local locales = {
         SETTING_SHOW_OVERLAY = "Show heatmap overlay",
         SETTING_SHOW_OVERLAY_TOOLTIP = "Display your account-wide outdoor movement heatmap on the World Map.",
         SETTING_OVERLAY_OPACITY = "Heatmap opacity",
-        SETTING_OVERLAY_OPACITY_TOOLTIP = "Control how strongly the heatmap is drawn over the World Map.",
-        SETTINGS_CATEGORY_DESCRIPTION = "Explorer's Footprint records outdoor movement locally and displays it as a World Map heatmap.",
-        SLASH_HELP = "Usage: /footprint, /footprint toggle, /footprint status, /footprint debug map, or /footprint reset",
+        SETTING_OVERLAY_OPACITY_TOOLTIP = "Set overlay visibility. Dark purple shows few crossed cells; bright yellow shows many crossed cells.",
+        SETTINGS_CATEGORY_DESCRIPTION = "Each sample is a crossed map cell from movement. Colors run from dark purple (few crossings) to bright yellow (many crossings).",
+        SLASH_HELP_HEADER = "Explorer's Footprint commands:",
+        SLASH_HELP_OPEN = "/footprint  Open settings (alias: /ef)",
+        SLASH_HELP_HELP = "/footprint help   Show this help",
+        SLASH_HELP_TOGGLE = "/footprint toggle  Toggle the heatmap",
+        SLASH_HELP_STATUS = "/footprint status  Print map, cell, and sample totals",
+        SLASH_HELP_DEBUG = "/footprint debug map  Print map diagnostics",
+        SLASH_HELP_RESET = "/footprint reset   Ask for confirmation before clearing map data",
         TOGGLE_ON = "Explorer's Footprint heatmap enabled.",
         TOGGLE_OFF = "Explorer's Footprint heatmap disabled.",
         STATUS_FORMAT = "Explorer's Footprint: %d maps, %d cells, %d samples.",
@@ -33,4 +39,7 @@ local locales = {
 }
 
 local locale = GetLocale and GetLocale() or "enUS"
-ns.L = locales[locale] or locales.enUS
+ns.L = locales[locale] or {}
+if ns.L ~= locales.enUS then
+    setmetatable(ns.L, { __index = locales.enUS })
+end

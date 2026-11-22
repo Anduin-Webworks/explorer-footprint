@@ -63,13 +63,6 @@ end
 
 local COLOR_LUT = buildColorLUT()
 local BUCKET_THRESHOLDS = buildBucketThresholds()
-local MINIMUM_BUCKET = math.max(
-    0,
-    math.min(
-        COLOR_BUCKET_COUNT - 1,
-        math.ceil(ns.Config.minVisibleIntensity * (COLOR_BUCKET_COUNT - 1))
-    )
-)
 
 local function getColorBucket(count)
     if count <= ns.Config.intensityMinCount then
@@ -90,9 +83,6 @@ local function getColorBucket(count)
         end
     end
 
-    if bucket < MINIMUM_BUCKET then
-        return nil
-    end
     return bucket
 end
 

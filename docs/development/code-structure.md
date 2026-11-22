@@ -6,6 +6,7 @@
 ├── Core.lua
 ├── Config.lua
 ├── Localization.lua
+├── Utils.lua
 ├── Database.lua
 ├── Aggregator.lua
 ├── Sampler.lua
@@ -13,7 +14,7 @@
 ├── MapProvider.lua
 ├── HeatmapRenderer.lua
 ├── Options.lua
-├── Debug.lua
+├── Commands.lua
 ├── ExplorerFootprint.xml
 ├── README.md
 ├── CHANGELOG.md

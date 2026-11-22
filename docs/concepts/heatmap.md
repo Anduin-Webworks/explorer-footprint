@@ -1,6 +1,6 @@
 # Heatmap concept
 
-Explorer's Footprint turns movement into a density visualization. It samples the player's normalized map position once per second, assigns positions to cells in a fixed grid, and rasterizes the segment between consecutive same-map positions. Each crossed cell receives one count for that segment.
+Explorer's Footprint turns movement into a density visualization. It samples the player's normalized map position once per second, assigns positions to cells in a fixed 256 × 256 grid, and rasterizes the segment between consecutive same-map positions. Each crossed cell receives one count for that segment.
 
 It does not store a route. Repeatedly crossing the same cell increases its density, while stationary samples do not add counts. The original timestamps and exact path are not retained.
 
@@ -19,7 +19,7 @@ flowchart LR
 
 ## Intensity
 
-Intensity uses an absolute logarithmic sample-count scale rather than the most visited cell on the selected map. Counts of 1, 4, 16, 64, and 256 align with the purple, blue, green, yellow, and red anchors. Counts above 256 remain at the red end of the scale; unrecorded cells have no heatmap texture run. Alpha is capped using centralized configuration.
+Intensity uses an absolute logarithmic sample-count scale rather than the most visited cell on the selected map. Counts of 1, 4, 16, 64, and 256 align with the dark purple, blue, teal, green, and bright yellow anchors of the default viridis-style ramp. Counts above 256 remain at the bright end of the scale; unrecorded cells have no heatmap texture run. The minimum heatmap alpha is 0.45 before the user's global opacity multiplier, keeping first-visit cells visible. The former rainbow ramp remains available as a configuration preset.
 
 ## Hierarchical maps
 

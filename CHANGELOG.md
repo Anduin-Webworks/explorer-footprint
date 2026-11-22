@@ -4,6 +4,36 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.13] - 2026-11-21
+
+### Changed
+
+- Moved the shared map-position coordinate helper into `Utils.lua`.
+- Reused display-build projection statistics in map diagnostics instead of converting every stored cell a second time.
+- Renamed `Debug.lua` to `Commands.lua` to reflect its slash-command and reset-dialog responsibilities.
+- Replaced the sampler's per-frame elapsed-time handler with `C_Timer.NewTicker`.
+- Removed the unused intensity filter and kept `maxCount` documented as a diagnostic/rescale summary rather than a color-scale input.
+- Simplified Settings callbacks so the registered backing table remains the single writer for persisted settings.
+
+## [0.2.12] - 2026-11-21
+
+### Changed
+
+- Increased the heatmap grid from 64 × 64 to 256 × 256.
+- Migrated existing 64 × 64 cells across the center 2 × 2 cells of their corresponding 4 × 4 blocks, preserving aggregate counts while reducing the visible polka-dot effect.
+- Created a one-time `ExplorerFootprintDB.backup_v2` SavedVariables backup before the migration; resetting map data also removes that backup.
+- Kept the migration compatible with the current crossing-based sampler, per-map display revisions, pooled renderer, and viridis-style color scale.
+
+## [0.2.11] - 2026-11-21
+
+### Changed
+
+- Raised the minimum heatmap alpha from 0.20 to 0.45 so first-visit cells remain visible at the default opacity.
+- Made a viridis-style dark-to-bright ramp the default and retained the former rainbow ramp as `Config.colorStopPresets.rainbow`.
+- Added settings-page guidance for sample meaning and color interpretation.
+- Added multiline localized slash-command help with an explicit `/footprint help` command.
+- Added per-key fallback from non-English locale tables to `enUS`.
+
 ## [0.2.10] - 2026-11-21
 
 ### Changed

@@ -7,14 +7,15 @@
 | `Core.lua` | Waits for `PLAYER_LOGIN` and starts the addon modules. |
 | `Config.lua` | Central defaults for sampling, grid, rendering, and persistence limits. |
 | `Localization.lua` | English strings with a locale lookup ready for additional locale files. |
+| `Utils.lua` | Shared helpers for reading normalized map-position coordinates. |
 | `Database.lua` | Initializes, validates, migrates, resets, and summarizes `ExplorerFootprintDB`. |
-| `Sampler.lua` | Samples map positions, preserves consecutive endpoints, and ignores stationary samples. |
+| `Sampler.lua` | Samples map positions on a timer ticker, preserves consecutive endpoints, and ignores stationary samples. |
 | `Aggregator.lua` | Converts normalized positions into same-map Bresenham segments and sparse crossed-cell counts. |
 | `MapProjection.lua` | Relates source and target map IDs, converts positions through world coordinates, and builds temporary target-map cells. |
 | `MapProvider.lua` | Registers a `MapCanvasDataProviderMixin` provider and manages one full-canvas heatmap layer pin. |
 | `HeatmapRenderer.lua` | Builds quantized color runs, owns the pooled texture layer pin, and provides the visual refresh facade. |
 | `Options.lua` | Registers the Retail Settings checkbox. |
-| `Debug.lua` | Registers slash commands and the confirmed reset dialog. |
+| `Commands.lua` | Registers slash commands and the confirmed reset dialog. |
 
 ## Initialization flow
 
@@ -31,7 +32,7 @@ sequenceDiagram
     Core->>DB: Initialize and normalize
     Core->>Settings: Register category and checkbox
     Core->>Map: Register with WorldMapFrame
-    Core->>Sampler: Start throttled OnUpdate
+    Core->>Sampler: Start timer ticker
 ```
 
 ## Important boundaries
@@ -55,5 +56,5 @@ sequenceDiagram
 
 - The target API is Retail-only and can return `nil` for map positions.
 - The provider depends on Blizzard's MapCanvas templates being available before XML loading.
-- The current grid dimensions are configuration defaults, not a user-facing migration-safe setting.
+- The current grid is 256 × 256. Changing its dimensions requires a versioned SavedVariables migration and a compatibility review.
 - The repository has no automated Retail client test harness.

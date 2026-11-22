@@ -7,7 +7,7 @@
 | Show heatmap overlay | Boolean | `true` | `ExplorerFootprintDB.settings.showOverlay` | Shows or hides the owned World Map heatmap layer. |
 | Heatmap opacity | Number (0–100) | `55` | `ExplorerFootprintDB.settings.overlayOpacity` | Controls the strength of the rectangle-cell overlay over the World Map. |
 
-Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings. Sampling runs every 1 second, the maximum segment distance is 40 cells per axis, the current absolute logarithmic anchors are 1, 4, 16, 64, and 256 samples, and the per-cell rescale ceiling is 65,535.
+Sampling and renderer values are currently developer configuration in `Config.lua`, not registered user settings. The current grid is 256 × 256, sampling runs every 1 second, the maximum segment distance is 40 cells per axis, the current absolute logarithmic anchors are 1, 4, 16, 64, and 256 samples, the minimum heatmap alpha is 0.45, and the per-cell rescale ceiling is 65,535. The per-map `maxCount` summary is retained for diagnostics and rescaling, but does not affect color normalization. The default color preset is viridis-style; the former rainbow stops remain available under `Config.colorStopPresets.rainbow`. Existing 64 × 64 data is migrated once at schema version 3, with the original maps retained temporarily in `ExplorerFootprintDB.backup_v2`.
 
 ## Slash commands
 
@@ -15,6 +15,8 @@ Sampling and renderer values are currently developer configuration in `Config.lu
 | --- | --- |
 | `/footprint` | Opens the addon Settings page. |
 | `/ef` | Alias for `/footprint`. |
+| `/footprint help` | Prints the available slash commands. |
+| `/footprint toggle` | Toggles the heatmap display. |
 | `/footprint status` | Prints map, non-zero-cell, and aggregate sample totals. |
 | `/footprint debug map` | Prints current map IDs, parent chain, source-map projection results, and rendered coordinate bounds. |
 | `/footprint reset` | Opens a confirmation dialog, then clears all map data. |

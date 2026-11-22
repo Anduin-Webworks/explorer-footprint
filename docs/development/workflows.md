@@ -13,8 +13,9 @@
 1. Describe the old and new shapes.
 2. Increment the schema version.
 3. Add an explicit migration in `Database.lua`.
-4. Keep malformed-data handling safe.
-5. Test first-run, upgrade, reload, and reset paths in Retail.
+4. Keep a recoverable backup when replacing user data, and define when it will be retired.
+5. Keep malformed-data handling safe.
+6. Test first-run, upgrade, reload, and reset paths in Retail.
 
 ## Change map rendering
 

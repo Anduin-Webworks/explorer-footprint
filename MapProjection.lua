@@ -15,18 +15,6 @@ local function isValidCoordinate(x, y)
         and x >= 0 and x <= 1 and y >= 0 and y <= 1
 end
 
-local function getXY(position)
-    if not position then
-        return nil
-    end
-
-    if position.GetXY then
-        return position:GetXY()
-    end
-
-    return position.x, position.y
-end
-
 function ns.MapProjection:GetMapInfo(mapID)
     if not mapID then
         return nil
@@ -115,7 +103,7 @@ function ns.MapProjection:ConvertRaw(sourceMapID, x, y, targetMapID)
         return nil
     end
 
-    return getXY(targetPosition)
+    return ns.Utils.GetXY(targetPosition)
 end
 
 local function approximatelyEqual(first, second)
@@ -134,11 +122,13 @@ local function buildTransform(
     secondSourceX,
     thirdSourceY
 )
-    local scaleX = (secondX - firstX) / (secondSourceX - firstSourceX)
-    local scaleY = (thirdX - firstX) / (thirdSourceY - firstSourceY)
+    local sourceXRange = secondSourceX - firstSourceX
+    local sourceYRange = thirdSourceY - firstSourceY
+    local scaleX = (secondX - firstX) / sourceXRange
+    local scaleY = (thirdX - firstX) / sourceYRange
     local offsetX = firstX - (scaleX * firstSourceX) - (scaleY * firstSourceY)
-    local scaleXForY = (secondY - firstY) / (secondSourceX - firstSourceX)
-    local scaleYForY = (thirdY - firstY) / (thirdSourceY - firstSourceY)
+    local scaleXForY = (secondY - firstY) / sourceXRange
+    local scaleYForY = (thirdY - firstY) / sourceYRange
     local offsetY = firstY - (scaleXForY * firstSourceX) - (scaleYForY * firstSourceY)
 
     return {
@@ -316,11 +306,21 @@ function ns.MapProjection:IncrementSourceCells(sourceMapID, cellDeltas, revision
         return false
     end
 
+    local sourceStats = cached.sourceStats and cached.sourceStats[sourceMapID]
+    local sourceMapData = ns.DB and ns.DB.maps and (
+        ns.DB.maps[sourceMapID] or ns.DB.maps[tostring(sourceMapID)]
+    )
     for cellIndex, delta in pairs(cellDeltas) do
         local count = (tonumber(cached.cells[cellIndex]) or 0) + delta
         cached.cells[cellIndex] = count
         if count > cached.maxCount then
             cached.maxCount = count
+        end
+
+        if sourceStats and sourceMapData and sourceMapData.cells
+            and tonumber(sourceMapData.cells[cellIndex]) == delta then
+            sourceStats.cellCount = sourceStats.cellCount + 1
+            sourceStats.projectedCount = sourceStats.projectedCount + 1
         end
     end
     cached.runs = nil
@@ -350,6 +350,7 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
     local maxCount = 0
     local width, height = ns.Config.gridWidth, ns.Config.gridHeight
     local sourceRevisions = {}
+    local sourceStats = {}
 
     for sourceMapID, mapData in pairs(ns.DB.maps) do
         local numericSourceMapID = tonumber(sourceMapID)
@@ -357,10 +358,19 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
             and type(mapData.cells) == "table"
             and self:AreRelated(numericSourceMapID, targetMapID) then
             sourceRevisions[numericSourceMapID] = getMapRevision(numericSourceMapID)
+            local stats = {
+                mapID = numericSourceMapID,
+                name = (self:GetMapInfo(numericSourceMapID) or {}).name or "unknown",
+                cellCount = 0,
+                projectedCount = 0,
+                failedCount = 0,
+            }
+            sourceStats[numericSourceMapID] = stats
 
             for cellIndex, count in pairs(mapData.cells) do
                 count = tonumber(count) or 0
                 if count > 0 then
+                    stats.cellCount = stats.cellCount + 1
                     local cellY = math.floor(cellIndex / width)
                     local cellX = cellIndex - (cellY * width)
                     local sourceX = (cellX + 0.5) / width
@@ -373,6 +383,7 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
                     )
 
                     if targetX and targetY then
+                        stats.projectedCount = stats.projectedCount + 1
                         local targetCellX = math.min(width - 1, math.floor(targetX * width))
                         local targetCellY = math.min(height - 1, math.floor(targetY * height))
                         local targetCellIndex = targetCellY * width + targetCellX
@@ -381,6 +392,8 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
                         if targetCount > maxCount then
                             maxCount = targetCount
                         end
+                    else
+                        stats.failedCount = stats.failedCount + 1
                     end
                 end
             end
@@ -391,6 +404,7 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
         sourceRevisions = sourceRevisions,
         cells = cells,
         maxCount = maxCount,
+        sourceStats = sourceStats,
         runs = nil,
     }
     self.displayCache[targetMapID] = cached
@@ -418,53 +432,18 @@ function ns.MapProjection:GetDisplayDiagnostics(targetMapID)
     end
 
     for sourceMapID, mapData in pairs(ns.DB.maps) do
-        local numericSourceMapID = tonumber(sourceMapID)
-        if numericSourceMapID and type(mapData) == "table" then
+        if tonumber(sourceMapID) and type(mapData) == "table" then
             diagnostics.storedMapCount = diagnostics.storedMapCount + 1
-
-            if type(mapData.cells) == "table"
-                and self:AreRelated(numericSourceMapID, targetMapID) then
-                local sourceStats = {
-                    mapID = numericSourceMapID,
-                    name = (self:GetMapInfo(numericSourceMapID) or {}).name or "unknown",
-                    cellCount = 0,
-                    projectedCount = 0,
-                    failedCount = 0,
-                }
-
-                diagnostics.relatedMapCount = diagnostics.relatedMapCount + 1
-                for cellIndex, count in pairs(mapData.cells) do
-                    count = tonumber(count) or 0
-                    if count > 0 then
-                        sourceStats.cellCount = sourceStats.cellCount + 1
-                        diagnostics.relatedCellCount = diagnostics.relatedCellCount + 1
-
-                        local width, height = ns.Config.gridWidth, ns.Config.gridHeight
-                        local cellY = math.floor(cellIndex / width)
-                        local cellX = cellIndex - (cellY * width)
-                        local sourceX = (cellX + 0.5) / width
-                        local sourceY = (cellY + 0.5) / height
-                        local targetX, targetY = self:ConvertPosition(
-                            numericSourceMapID,
-                            sourceX,
-                            sourceY,
-                            targetMapID
-                        )
-
-                        if targetX and targetY then
-                            sourceStats.projectedCount = sourceStats.projectedCount + 1
-                        else
-                            sourceStats.failedCount = sourceStats.failedCount + 1
-                        end
-                    end
-                end
-
-                diagnostics.sourceMaps[#diagnostics.sourceMaps + 1] = sourceStats
-            end
         end
     end
 
-    local displayCells, maxCount = self:BuildDisplayCells(targetMapID)
+    local displayCells, maxCount, cached = self:BuildDisplayCells(targetMapID)
+    for _, sourceStats in pairs(cached.sourceStats or {}) do
+        diagnostics.relatedMapCount = diagnostics.relatedMapCount + 1
+        diagnostics.relatedCellCount = diagnostics.relatedCellCount + sourceStats.cellCount
+        diagnostics.sourceMaps[#diagnostics.sourceMaps + 1] = sourceStats
+    end
+
     diagnostics.displayCellCount = countEntries(displayCells)
     diagnostics.maxCount = maxCount
     diagnostics.minX, diagnostics.maxX = 1, 0
