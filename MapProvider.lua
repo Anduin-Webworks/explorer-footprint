@@ -121,7 +121,7 @@ function ns.MapProvider:RefreshAllData()
     end
 
     local mapID = map:GetMapID()
-    local cells, _, displayCache = ns.MapProjection:BuildDisplayCells(mapID)
+    local cells, _, displayCache, gridWidth, gridHeight = ns.MapProjection:BuildRenderCells(mapID)
     local cellCount = 0
     for _ in pairs(cells) do
         cellCount = cellCount + 1
@@ -131,19 +131,21 @@ function ns.MapProvider:RefreshAllData()
             reason = "no-cells",
             mapID = mapID,
             cellCount = cellCount,
+            gridWidth = gridWidth,
+            gridHeight = gridHeight,
             runCount = 0,
             pin = false,
         }
         return
     end
 
-    local runs = displayCache.runs
-    local buildState = displayCache.buildState
+    local runs = displayCache.renderRuns
+    local buildState = displayCache.renderBuildState
     if not runs then
-        runs = ns.HeatmapRenderer:BuildRuns(cells)
-        displayCache.runs = runs
+        runs = ns.HeatmapRenderer:BuildRuns(cells, gridWidth, gridHeight)
+        displayCache.renderRuns = runs
         buildState = ns.HeatmapRenderer.lastBuildState or {}
-        displayCache.buildState = buildState
+        displayCache.renderBuildState = buildState
     end
     buildState = buildState or {}
     if #runs == 0 then
@@ -151,6 +153,8 @@ function ns.MapProvider:RefreshAllData()
             reason = "no-runs",
             mapID = mapID,
             cellCount = cellCount,
+            gridWidth = gridWidth,
+            gridHeight = gridHeight,
             positiveCellCount = buildState.positiveCellCount or 0,
             bucketedCellCount = buildState.bucketedCellCount or 0,
             firstRawType = buildState.firstRawType or "none",
@@ -163,12 +167,16 @@ function ns.MapProvider:RefreshAllData()
 
     self.layerPin = map:AcquirePin(PIN_TEMPLATE, {
         runs = runs,
+        gridWidth = gridWidth,
+        gridHeight = gridHeight,
         opacity = getOverlayOpacity(),
     })
     self.lastRenderState = {
         reason = "pin-acquired",
         mapID = mapID,
         cellCount = cellCount,
+        gridWidth = gridWidth,
+        gridHeight = gridHeight,
         positiveCellCount = buildState.positiveCellCount or 0,
         bucketedCellCount = buildState.bucketedCellCount or 0,
         firstRawType = buildState.firstRawType or "none",

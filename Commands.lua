@@ -113,6 +113,8 @@ local function printMapDiagnostics()
     }
     print(ns.L.DEBUG_MAP_RENDER:format(
         renderState.reason,
+        renderState.gridWidth or ns.Config.gridWidth,
+        renderState.gridHeight or ns.Config.gridHeight,
         renderState.cellCount or 0,
         renderState.positiveCellCount or 0,
         renderState.bucketedCellCount or 0,

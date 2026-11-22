@@ -93,8 +93,7 @@ local function getColorBucket(count)
     return bucket
 end
 
-local function buildRuns(cells)
-    local width = ns.Config.gridWidth
+local function buildRuns(cells, width, height)
     local rows = {}
     local positiveCellCount = 0
     local bucketedCellCount = 0
@@ -163,6 +162,8 @@ local function buildRuns(cells)
             positiveCellCount = positiveCellCount,
             bucketedCellCount = bucketedCellCount,
             runCount = #runs,
+            gridWidth = width,
+            gridHeight = height,
             firstRawType = firstRawType or "none",
             firstRawValue = firstRawValue or "none",
         }
@@ -194,6 +195,8 @@ end
 function ExplorerFootprintMapPinMixin:OnAcquired(data)
     self:EnsurePool()
     self.runs = data and data.runs or {}
+    self.gridWidth = data and data.gridWidth or ns.Config.gridWidth
+    self.gridHeight = data and data.gridHeight or ns.Config.gridHeight
     self:SetAlpha(data and data.opacity or 1)
     self:Layout()
 end
@@ -203,6 +206,8 @@ function ExplorerFootprintMapPinMixin:OnReleased()
         self.pool:ReleaseAll()
     end
     self.runs = nil
+    self.gridWidth = nil
+    self.gridHeight = nil
     self:SetAlpha(0)
 end
 
@@ -228,8 +233,10 @@ function ExplorerFootprintMapPinMixin:Layout()
     canvasHeight = math.max(1, canvasHeight)
 
     self.pool:ReleaseAll()
-    local cellWidth = canvasWidth / ns.Config.gridWidth
-    local cellHeight = canvasHeight / ns.Config.gridHeight
+    local gridWidth = self.gridWidth or ns.Config.gridWidth
+    local gridHeight = self.gridHeight or ns.Config.gridHeight
+    local cellWidth = canvasWidth / gridWidth
+    local cellHeight = canvasHeight / gridHeight
 
     for _, run in ipairs(self.runs or {}) do
         local color = COLOR_LUT[run.bucket]
@@ -259,8 +266,12 @@ end
 ns.HeatmapRenderer = {
 }
 
-function ns.HeatmapRenderer:BuildRuns(cells)
-    return buildRuns(cells)
+function ns.HeatmapRenderer:BuildRuns(cells, width, height)
+    return buildRuns(
+        cells,
+        width or ns.Config.gridWidth,
+        height or ns.Config.gridHeight
+    )
 end
 
 function ns.HeatmapRenderer:Refresh()

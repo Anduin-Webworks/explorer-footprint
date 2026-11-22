@@ -26,6 +26,16 @@ ns.Config = {
     gridHeight = 256,
     maxCellCount = 65535,
 
+    -- Persisted cells always use the full-resolution grid. The renderer may
+    -- aggregate those cells for smaller map types so dense city maps remain
+    -- readable without changing SavedVariables.
+    renderGridByMapType = {
+        default = 256,
+        zone = 128,
+        dungeon = 128,
+        micro = 64,
+    },
+
     renderRefreshInterval = 1.0,
     minAlpha = 0.45,
     maxAlpha = 1.00,

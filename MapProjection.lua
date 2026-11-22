@@ -273,6 +273,27 @@ local function getMapRevision(mapID)
     return (ns.MapRevisions and ns.MapRevisions[mapID]) or 0
 end
 
+local function getUIMapType(name, fallback)
+    return Enum and Enum.UIMapType and Enum.UIMapType[name] or fallback
+end
+
+function ns.MapProjection:GetRenderGrid(targetMapID)
+    local info = self:GetMapInfo(targetMapID)
+    local mapType = info and info.mapType
+    local renderGrid = ns.Config.renderGridByMapType
+    local size = renderGrid.default
+
+    if mapType == getUIMapType("Micro", 5) then
+        size = renderGrid.micro
+    elseif mapType == getUIMapType("Zone", 3) then
+        size = renderGrid.zone
+    elseif mapType == getUIMapType("Dungeon", 4) then
+        size = renderGrid.dungeon
+    end
+
+    return size, size
+end
+
 function ns.MapProjection:IsDisplayCacheCurrent(targetMapID, cached)
     if not cached or type(cached.sourceRevisions) ~= "table"
         or not ns.DB or type(ns.DB.maps) ~= "table" then
@@ -325,6 +346,12 @@ function ns.MapProjection:IncrementSourceCells(sourceMapID, cellDeltas, revision
     end
     cached.runs = nil
     cached.buildState = nil
+    cached.renderCells = nil
+    cached.renderMaxCount = nil
+    cached.renderGridWidth = nil
+    cached.renderGridHeight = nil
+    cached.renderRuns = nil
+    cached.renderBuildState = nil
     cached.sourceRevisions[sourceMapID] = revision
     return true
 end
@@ -412,6 +439,53 @@ function ns.MapProjection:BuildDisplayCells(targetMapID)
     return cells, maxCount, cached
 end
 
+function ns.MapProjection:BuildRenderCells(targetMapID)
+    local cells, _, cached = self:BuildDisplayCells(targetMapID)
+    local width, height = self:GetRenderGrid(targetMapID)
+
+    if cached.renderCells
+        and cached.renderGridWidth == width
+        and cached.renderGridHeight == height then
+        return cached.renderCells, cached.renderMaxCount, cached, width, height
+    end
+
+    if width == ns.Config.gridWidth and height == ns.Config.gridHeight then
+        cached.renderCells = cells
+        cached.renderMaxCount = cached.maxCount
+    else
+        local renderCells = {}
+        local renderMaxCount = 0
+
+        for cellIndex, count in pairs(cells) do
+            local sourceY = math.floor(cellIndex / ns.Config.gridWidth)
+            local sourceX = cellIndex - (sourceY * ns.Config.gridWidth)
+            local renderX = math.min(
+                width - 1,
+                math.floor(sourceX * width / ns.Config.gridWidth)
+            )
+            local renderY = math.min(
+                height - 1,
+                math.floor(sourceY * height / ns.Config.gridHeight)
+            )
+            local renderIndex = renderY * width + renderX
+            local renderCount = (tonumber(renderCells[renderIndex]) or 0) + count
+            renderCells[renderIndex] = renderCount
+            if renderCount > renderMaxCount then
+                renderMaxCount = renderCount
+            end
+        end
+
+        cached.renderCells = renderCells
+        cached.renderMaxCount = renderMaxCount
+    end
+
+    cached.renderGridWidth = width
+    cached.renderGridHeight = height
+    cached.renderRuns = nil
+    cached.renderBuildState = nil
+    return cached.renderCells, cached.renderMaxCount, cached, width, height
+end
+
 local function countEntries(values)
     local count = 0
     for _ in pairs(values) do
@@ -438,7 +512,7 @@ function ns.MapProjection:GetDisplayDiagnostics(targetMapID)
         end
     end
 
-    local displayCells, maxCount, cached = self:BuildDisplayCells(targetMapID)
+    local displayCells, maxCount, cached, width, height = self:BuildRenderCells(targetMapID)
     for _, sourceStats in pairs(cached.sourceStats or {}) do
         diagnostics.relatedMapCount = diagnostics.relatedMapCount + 1
         diagnostics.relatedCellCount = diagnostics.relatedCellCount + sourceStats.cellCount
@@ -450,7 +524,6 @@ function ns.MapProjection:GetDisplayDiagnostics(targetMapID)
     diagnostics.minX, diagnostics.maxX = 1, 0
     diagnostics.minY, diagnostics.maxY = 1, 0
 
-    local width, height = ns.Config.gridWidth, ns.Config.gridHeight
     for cellIndex in pairs(displayCells) do
         local cellY = math.floor(cellIndex / width)
         local cellX = cellIndex - (cellY * width)

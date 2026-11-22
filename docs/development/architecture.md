@@ -56,5 +56,5 @@ sequenceDiagram
 
 - The target API is Retail-only and can return `nil` for map positions.
 - The provider depends on Blizzard's MapCanvas templates being available before XML loading.
-- The current grid is 256 × 256. Changing its dimensions requires a versioned SavedVariables migration and a compatibility review.
+- Movement data uses a persisted 256 × 256 grid. Render-only downsampling can use smaller map-type-specific grids without a SavedVariables migration; changing the persisted grid still requires a versioned migration and compatibility review.
 - The repository has no automated Retail client test harness.

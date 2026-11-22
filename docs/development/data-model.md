@@ -23,7 +23,7 @@ ExplorerFootprintDB = {
 }
 ```
 
-`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. The current grid is 256 × 256, configured in `Config.lua`. `maxCount` is retained as a per-map diagnostic and rescale summary; it does not normalize the absolute color scale.
+`cellIndex` is a zero-based integer: `cellY * gridWidth + cellX`. Persisted movement data uses a 256 × 256 grid configured in `Config.lua`; the renderer may aggregate it into smaller transient grids for smaller map types. `maxCount` is retained as a per-map diagnostic and rescale summary; it does not normalize the absolute color scale.
 
 ## Lifecycle
 

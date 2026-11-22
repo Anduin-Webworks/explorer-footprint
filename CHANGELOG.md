@@ -4,6 +4,13 @@ All notable changes to Explorer's Footprint are documented here.
 
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [0.2.21] - 2026-11-21
+
+### Changed
+
+- Kept persisted movement cells at 256 × 256 while rendering micro maps at 64 × 64 and zones or dungeons at 128 × 128 for larger, more readable rectangles.
+- Added render-resolution information to `/footprint debug map`; runtime display caches now invalidate correctly when aggregated cells change.
+
 ## [0.2.20] - 2026-11-21
 
 ### Fixed
